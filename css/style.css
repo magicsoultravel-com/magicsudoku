@@ -53,6 +53,54 @@
   --note: #a1a1aa;
 }
 
+[data-theme="ocean"] {
+  --bg: #e8f5f2;
+  --surface: #f4fbf9;
+  --text: #0f2e2a;
+  --text-muted: #3d6b63;
+  --border: #a7d4cc;
+  --border-strong: #0d5c52;
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
+  --accent-soft: #ccfbf1;
+  --given: #0f2e2a;
+  --user: #0d9488;
+  --highlight: #b8e0d8;
+  --highlight-peer: #d4eee8;
+  --highlight-value: #99f6e4;
+  --highlight-value-line: #5eead4;
+  --hover: #d8f0eb;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
+  --success: #059669;
+  --shadow: 0 1px 3px rgb(13 92 82 / 0.1);
+  --note: #3d6b63;
+}
+
+[data-theme="dusk"] {
+  --bg: #1c1824;
+  --surface: #262033;
+  --text: #ede9f5;
+  --text-muted: #a89ec0;
+  --border: #3f3654;
+  --border-strong: #c4b5fd;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-soft: #3b2f56;
+  --given: #f5f3ff;
+  --user: #c4b5fd;
+  --highlight: #3f3654;
+  --highlight-peer: #2e273c;
+  --highlight-value: #5b21b6;
+  --highlight-value-line: #6d28d9;
+  --hover: #322a42;
+  --error: #f0abfc;
+  --error-bg: #4a044e;
+  --success: #86efac;
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  --note: #a89ec0;
+}
+
 html {
   font-size: 16px;
   -webkit-tap-highlight-color: transparent;
@@ -135,51 +183,6 @@ body {
   border: 2px solid var(--border-strong);
   border-radius: 4px;
   box-shadow: var(--shadow);
-}
-
-.seeds {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-}
-
-.seeds-head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.375rem;
-  margin-bottom: 0.25rem;
-}
-
-.seeds-label {
-  font-weight: 600;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.current-seed {
-  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
-  color: var(--accent);
-  word-break: break-all;
-}
-
-.seed-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.seed-list li {
-  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
-  line-height: 1.35;
-  word-break: break-all;
-}
-
-.seed-list li.current {
-  color: var(--accent);
-  font-weight: 600;
 }
 
 .cell {
@@ -389,9 +392,18 @@ body {
 }
 
 .footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--text-muted);
-  min-height: 1.25rem;
+  min-height: 2rem;
+}
+
+.footer .status {
+  flex: 1;
+  min-width: 0;
 }
 
 .status.ok {
@@ -400,11 +412,6 @@ body {
 
 .status.err {
   color: var(--error);
-}
-
-[data-theme="light"] .icon-moon,
-[data-theme="dark"] .icon-sun {
-  display: none;
 }
 
 .dialog {
@@ -436,10 +443,90 @@ body {
   font-weight: 600;
 }
 
+.dialog-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem 0;
+}
+
+.tab {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--highlight-peer);
+}
+
+.tab.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .dialog-body {
   padding: 0.5rem 0.75rem 0.75rem;
   max-height: 60dvh;
   overflow-y: auto;
+}
+
+.dialog-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.seeds-current {
+  margin-bottom: 0.75rem;
+}
+
+.seeds-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.current-seed {
+  display: block;
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.seed-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.seed-list li {
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  word-break: break-all;
+  color: var(--text-muted);
+}
+
+.seed-list li.current {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .lesson {

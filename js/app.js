@@ -7,18 +7,22 @@
   const themeToggle = document.getElementById("theme-toggle");
   const appEl = document.querySelector(".app");
   const lessonsDialog = document.getElementById("lessons-dialog");
-  const lessonsContent = document.getElementById("lessons-content");
+  const lessonsBasics = document.getElementById("lessons-basics");
+  const lessonsAdvanced = document.getElementById("lessons-advanced");
+  const seedsDialog = document.getElementById("seeds-dialog");
+  const seedList = document.getElementById("seed-list");
+  const currentSeedEl = document.getElementById("current-seed");
 
   const btnUndo = document.getElementById("btn-undo");
   const btnRedo = document.getElementById("btn-redo");
   const btnPencil = document.getElementById("btn-pencil");
   const btnZen = document.getElementById("btn-zen");
-  const seedPanel = document.getElementById("seed-panel");
-  const seedList = document.getElementById("seed-list");
-  const currentSeedEl = document.getElementById("current-seed");
 
+  const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
   const MAX_SEEDS = 10;
+  const THEMES = ["light", "dark", "ocean", "dusk"];
+  const THEME_LABELS = { light: "Light", dark: "Dark", ocean: "Ocean", dusk: "Dusk" };
 
   let puzzle = [];
   let solution = [];
@@ -29,6 +33,7 @@
   let pencilMode = false;
   let zenMode = false;
   let timerInterval = null;
+  let saveInterval = null;
   let seconds = 0;
   let gameWon = false;
   let history = [];
@@ -45,6 +50,14 @@
 
   function cloneNotes(src) {
     return src.map((row) => row.map((set) => new Set(set)));
+  }
+
+  function serializeNotes() {
+    return notes.map((row) => row.map((set) => [...set]));
+  }
+
+  function deserializeNotes(data) {
+    return data.map((row) => row.map((arr) => new Set(arr)));
   }
 
   function snapshot() {
@@ -79,6 +92,7 @@
     setStatus("");
     renderBoard();
     updateUndoRedo();
+    saveGame();
   }
 
   function redo() {
@@ -89,11 +103,21 @@
     setStatus("");
     renderBoard();
     updateUndoRedo();
+    saveGame();
   }
 
   function setTheme(theme) {
+    if (!THEMES.includes(theme)) theme = "light";
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("sudoku-theme", theme);
+    themeToggle.title = `Theme: ${THEME_LABELS[theme]}`;
+  }
+
+  function cycleTheme() {
+    const current = document.documentElement.getAttribute("data-theme") || "light";
+    const idx = THEMES.indexOf(current);
+    setTheme(THEMES[(idx + 1) % THEMES.length]);
+    saveGame();
   }
 
   function setZen(enabled) {
@@ -105,10 +129,12 @@
 
   function initPreferences() {
     const savedTheme = localStorage.getItem("sudoku-theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
+    if (THEMES.includes(savedTheme)) {
       setTheme(savedTheme);
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
       setTheme("dark");
+    } else {
+      setTheme("light");
     }
     setZen(localStorage.getItem("sudoku-zen") === "1");
   }
@@ -119,10 +145,11 @@
     return `${m}:${sec.toString().padStart(2, "0")}`;
   }
 
-  function startTimer() {
+  function startTimer(fromSeconds = 0) {
     stopTimer();
-    seconds = 0;
-    timerEl.textContent = formatTime(0);
+    seconds = fromSeconds;
+    timerEl.textContent = formatTime(seconds);
+    if (gameWon) return;
     timerInterval = setInterval(() => {
       seconds++;
       timerEl.textContent = formatTime(seconds);
@@ -136,9 +163,77 @@
     }
   }
 
+  function startAutoSave() {
+    if (saveInterval) clearInterval(saveInterval);
+    saveInterval = setInterval(saveGame, 15000);
+  }
+
   function setStatus(msg, type = "") {
     statusEl.textContent = msg;
     statusEl.className = "status" + (type ? ` ${type}` : "");
+  }
+
+  function saveGame() {
+    if (!puzzle.length || !solution.length) return;
+    const state = {
+      v: 1,
+      puzzle,
+      solution,
+      given,
+      notes: serializeNotes(),
+      seed: currentSeed,
+      difficulty: currentDifficulty,
+      seconds,
+      gameWon,
+      pencilMode,
+      activeNumber,
+      selected,
+      difficultyPref: difficultyEl.value,
+    };
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full or unavailable */
+    }
+  }
+
+  function tryLoadGame() {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return false;
+
+    try {
+      const state = JSON.parse(raw);
+      if (state.v !== 1 || !Array.isArray(state.puzzle) || state.puzzle.length !== 9) {
+        return false;
+      }
+
+      puzzle = state.puzzle.map((row) => [...row]);
+      solution = state.solution.map((row) => [...row]);
+      given = state.given.map((row) => [...row]);
+      notes = deserializeNotes(state.notes);
+      currentSeed = state.seed;
+      currentDifficulty = state.difficulty;
+      seconds = state.seconds || 0;
+      gameWon = !!state.gameWon;
+      pencilMode = !!state.pencilMode;
+      activeNumber = state.activeNumber ?? null;
+      selected = state.selected ?? null;
+      history = [];
+      future = [];
+
+      if (state.difficultyPref) difficultyEl.value = state.difficultyPref;
+
+      btnPencil.classList.toggle("active", pencilMode);
+      if (gameWon) setStatus("Solved!", "ok");
+      else setStatus("");
+
+      renderBoard();
+      startTimer(seconds);
+      updateUndoRedo();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   function cellTitle(row, col) {
@@ -293,6 +388,7 @@
     if (pencilMode) {
       activeNumber = activeNumber === num ? null : num;
       renderBoard();
+      saveGame();
       return;
     }
     if (selected && !gameWon && !given[selected.row][selected.col]) {
@@ -301,6 +397,7 @@
     }
     activeNumber = activeNumber === num ? null : num;
     renderBoard();
+    saveGame();
   }
 
   function toggleNoteAt(row, col, num) {
@@ -310,6 +407,7 @@
     else notes[row][col].add(num);
     clearErrors();
     renderBoard();
+    saveGame();
   }
 
   function selectCell(row, col) {
@@ -325,6 +423,7 @@
     if (val && !pencilMode) activeNumber = val;
     clearErrors();
     renderBoard();
+    saveGame();
   }
 
   function clearErrors() {
@@ -358,7 +457,10 @@
     if (pencilMode) {
       activeNumber = num;
       if (puzzle[row][col] === 0) toggleNoteAt(row, col, num);
-      else renderBoard();
+      else {
+        renderBoard();
+        saveGame();
+      }
       return;
     }
 
@@ -370,6 +472,7 @@
     clearErrors();
     renderBoard();
     checkWin();
+    saveGame();
   }
 
   function eraseCell() {
@@ -383,12 +486,14 @@
     clearErrors();
     renderBoard();
     setStatus("");
+    saveGame();
   }
 
   function togglePencil() {
     pencilMode = !pencilMode;
     btnPencil.classList.toggle("active", pencilMode);
     if (selected) renderBoard();
+    saveGame();
   }
 
   function showErrors(errorSet) {
@@ -429,6 +534,7 @@
     stopTimer();
     setStatus("Solved!", "ok");
     updateUndoRedo();
+    saveGame();
   }
 
   function loadSeedHistory() {
@@ -450,7 +556,6 @@
     seedHistory.unshift({ seed, difficulty, at: Date.now() });
     if (seedHistory.length > MAX_SEEDS) seedHistory.length = MAX_SEEDS;
     saveSeedHistory();
-    renderSeeds();
   }
 
   function renderSeeds() {
@@ -459,6 +564,13 @@
       : "—";
 
     seedList.innerHTML = "";
+    if (!seedHistory.length) {
+      const li = document.createElement("li");
+      li.textContent = "No seeds yet";
+      seedList.appendChild(li);
+      return;
+    }
+
     seedHistory.forEach((entry) => {
       const li = document.createElement("li");
       li.textContent = `${entry.seed} · ${entry.difficulty}`;
@@ -466,6 +578,19 @@
       li.title = new Date(entry.at).toLocaleString();
       seedList.appendChild(li);
     });
+  }
+
+  function openSeeds() {
+    renderSeeds();
+    seedsDialog.showModal();
+  }
+
+  function applyGameResult(result) {
+    puzzle = result.puzzle.map((row) => [...row]);
+    solution = result.solution;
+    given = result.given;
+    notes = emptyNotes();
+    recordSeed(result.seed, result.difficulty);
   }
 
   function newGame() {
@@ -481,29 +606,42 @@
     boardEl.style.opacity = "0.5";
 
     setTimeout(() => {
-      const result = Sudoku.generate(difficulty);
-      puzzle = result.puzzle.map((row) => [...row]);
-      solution = result.solution;
-      given = result.given;
-      notes = emptyNotes();
-      recordSeed(result.seed, result.difficulty);
+      applyGameResult(Sudoku.generate(difficulty));
       boardEl.style.opacity = "";
       setStatus("");
       renderBoard();
-      startTimer();
+      startTimer(0);
       updateUndoRedo();
+      saveGame();
     }, 10);
   }
 
+  function fillLessons(container, lessons) {
+    container.innerHTML = "";
+    lessons.forEach((lesson) => {
+      const article = document.createElement("article");
+      article.className = "lesson";
+      article.innerHTML = `<h3>${lesson.title}</h3><p>${lesson.body}</p>`;
+      container.appendChild(article);
+    });
+  }
+
+  function switchLessonTab(tab) {
+    const isBasics = tab === "basics";
+    document.getElementById("tab-basics").classList.toggle("active", isBasics);
+    document.getElementById("tab-advanced").classList.toggle("active", !isBasics);
+    document.getElementById("tab-basics").setAttribute("aria-selected", isBasics);
+    document.getElementById("tab-advanced").setAttribute("aria-selected", !isBasics);
+    lessonsBasics.hidden = !isBasics;
+    lessonsAdvanced.hidden = isBasics;
+  }
+
   function openLessons() {
-    if (!lessonsContent.childElementCount) {
-      Lessons.forEach((lesson) => {
-        const article = document.createElement("article");
-        article.className = "lesson";
-        article.innerHTML = `<h3>${lesson.title}</h3><p>${lesson.body}</p>`;
-        lessonsContent.appendChild(article);
-      });
+    if (!lessonsBasics.childElementCount) {
+      fillLessons(lessonsBasics, LessonsBasics);
+      fillLessons(lessonsAdvanced, LessonsAdvanced);
     }
+    switchLessonTab("basics");
     lessonsDialog.showModal();
   }
 
@@ -566,28 +704,42 @@
     selectCell(nr, nc);
   }
 
-  themeToggle.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme");
-    setTheme(current === "dark" ? "light" : "dark");
+  themeToggle.addEventListener("click", cycleTheme);
+  btnZen.addEventListener("click", () => {
+    setZen(!zenMode);
+    saveGame();
   });
-
-  btnZen.addEventListener("click", () => setZen(!zenMode));
   document.getElementById("btn-new").addEventListener("click", newGame);
   document.getElementById("btn-check").addEventListener("click", checkSolution);
   document.getElementById("btn-erase").addEventListener("click", eraseCell);
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
+  document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   document.getElementById("lessons-close").addEventListener("click", () => lessonsDialog.close());
+  document.getElementById("seeds-close").addEventListener("click", () => seedsDialog.close());
   lessonsDialog.addEventListener("click", (e) => {
     if (e.target === lessonsDialog) lessonsDialog.close();
+  });
+  seedsDialog.addEventListener("click", (e) => {
+    if (e.target === seedsDialog) seedsDialog.close();
+  });
+  document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchLessonTab(tab.dataset.tab));
   });
   btnUndo.addEventListener("click", undo);
   btnRedo.addEventListener("click", redo);
   document.addEventListener("keydown", handleKeydown);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") saveGame();
+  });
+  window.addEventListener("beforeunload", saveGame);
 
   initPreferences();
   loadSeedHistory();
-  renderSeeds();
   buildNumpad();
-  newGame();
+  startAutoSave();
+
+  if (!tryLoadGame()) {
+    newGame();
+  }
 })();
