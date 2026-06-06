@@ -7,6 +7,11 @@
   const difficultyEl = document.getElementById("difficulty");
   const themeSelect = document.getElementById("theme-select");
   const appEl = document.querySelector(".app");
+  const quoteSplash = document.getElementById("quote-splash");
+  const quoteTextEl = document.getElementById("quote-text");
+  const quoteAuthorEl = document.getElementById("quote-author");
+  const QUOTE_MIN_MS = 2600;
+  const QUOTE_FADE_MS = 280;
   const lessonsDialog = document.getElementById("lessons-dialog");
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
@@ -59,6 +64,38 @@
   let settingsOpen = false;
   let menuOpen = false;
   let confirmCallback = null;
+  let quoteSplashActive = false;
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function showQuoteSplash() {
+    if (quoteSplashActive) return;
+    quoteSplashActive = true;
+
+    const quote = Quotes.nextQuote();
+    quoteTextEl.textContent = quote.text;
+    quoteAuthorEl.textContent = quote.author;
+
+    quoteSplash.hidden = false;
+    quoteSplash.classList.remove("is-hiding");
+
+    await wait(20);
+    quoteSplash.classList.add("is-visible");
+
+    await wait(QUOTE_MIN_MS);
+
+    quoteSplash.classList.add("is-hiding");
+    quoteSplash.classList.remove("is-visible");
+    appEl.classList.add("is-ready");
+
+    await wait(QUOTE_FADE_MS);
+
+    quoteSplash.hidden = true;
+    quoteSplash.classList.remove("is-hiding");
+    quoteSplashActive = false;
+  }
 
   function emptyNotes() {
     return Array.from({ length: 9 }, () =>
@@ -822,7 +859,7 @@
     recordSeed(result.seed, result.difficulty);
   }
 
-  function newGame() {
+  async function newGame({ skipQuote = false } = {}) {
     closeMenu();
     gameWon = false;
     selected = null;
@@ -831,19 +868,23 @@
     future = [];
     setStatus("");
 
+    if (!skipQuote) {
+      await showQuoteSplash();
+    }
+
     const difficulty = difficultyEl.value;
     boardWrap.classList.add("is-clearing");
 
-    setTimeout(() => {
-      applyGameResult(Sudoku.generate(difficulty));
-      animateBoardReveal = true;
-      renderBoard();
-      boardWrap.classList.remove("is-clearing");
-      resetTimer();
-      setStatus("");
-      updateUndoRedo();
-      saveGame();
-    }, 260);
+    await wait(260);
+
+    applyGameResult(Sudoku.generate(difficulty));
+    animateBoardReveal = true;
+    renderBoard();
+    boardWrap.classList.remove("is-clearing");
+    resetTimer();
+    setStatus("");
+    updateUndoRedo();
+    saveGame();
   }
 
   function fillLessons(container, lessons) {
@@ -1027,12 +1068,18 @@
   });
   window.addEventListener("beforeunload", saveGame);
 
-  initPreferences();
-  loadSeedHistory();
-  buildNumpad();
-  startAutoSave();
+  async function boot() {
+    initPreferences();
+    loadSeedHistory();
+    buildNumpad();
+    startAutoSave();
 
-  if (!tryLoadGame()) {
-    newGame();
+    await showQuoteSplash();
+
+    if (!tryLoadGame()) {
+      await newGame({ skipQuote: true });
+    }
   }
+
+  boot();
 })();
