@@ -349,24 +349,6 @@ body {
   gap: 0.25rem;
 }
 
-.btn-companion-cat[data-cat-mode="1"]::after,
-.btn-companion-cat[data-cat-mode="2"]::after,
-.btn-companion-cat[data-cat-mode="3"]::after {
-  content: attr(data-cat-mode);
-  position: absolute;
-  right: 1px;
-  bottom: 0;
-  font-size: 0.5rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--accent);
-  pointer-events: none;
-}
-
-#btn-companion-cat {
-  position: relative;
-}
-
 .menu-selects {
   display: flex;
   align-items: center;
@@ -547,45 +529,19 @@ body {
   fill: currentColor;
 }
 
-.board-cat .cat-sprite .cl {
-  fill: var(--surface);
-  opacity: 0.88;
-}
-
-.board-cat .cat-sprite .cs {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.6;
-  opacity: 0.32;
-}
-
-.board-cat .cat-sprite .ce {
-  fill: var(--accent);
-}
-
-.board-cat .cat-sprite .cw {
-  stroke: currentColor;
-  stroke-width: 0.45;
-  fill: none;
-  opacity: 0.42;
-  stroke-linecap: round;
-}
-
 .board-cat .cat-view-front {
   display: none;
 }
 
 .board-cat.is-sitting .cat-view-side,
 .board-cat.is-looking .cat-view-side,
-.board-cat.is-meowing .cat-view-side,
-.board-cat.is-dragging .cat-view-side {
+.board-cat.is-meowing .cat-view-side {
   display: none;
 }
 
 .board-cat.is-sitting .cat-view-front,
 .board-cat.is-looking .cat-view-front,
-.board-cat.is-meowing .cat-view-front,
-.board-cat.is-dragging .cat-view-front {
+.board-cat.is-meowing .cat-view-front {
   display: block;
 }
 
@@ -608,6 +564,18 @@ body {
   display: none;
 }
 
+.board-cat.is-walking .cat-view-side,
+.board-cat.is-chasing .cat-view-side {
+  animation: cat-body-bob 0.9s ease-in-out infinite;
+  transform-origin: 40px 36px;
+}
+
+.board-cat.is-walking .cat-tail,
+.board-cat.is-chasing .cat-tail {
+  animation: cat-tail-walk 0.9s ease-in-out infinite;
+  transform-origin: 12px 32px;
+}
+
 .board-cat.is-walking .cat-leg-b,
 .board-cat.is-chasing .cat-leg-b {
   display: block;
@@ -615,16 +583,24 @@ body {
 
 .board-cat.is-walking .cat-leg-a,
 .board-cat.is-walking .cat-leg-b {
-  animation: cat-leg-frame 0.55s steps(1) infinite;
+  animation: cat-quad-step 0.9s steps(2) infinite;
 }
 
 .board-cat.is-walking .cat-leg-b {
   animation-direction: reverse;
 }
 
+.board-cat.is-chasing .cat-view-side {
+  animation-duration: 0.55s;
+}
+
+.board-cat.is-chasing .cat-tail {
+  animation-duration: 0.55s;
+}
+
 .board-cat.is-chasing .cat-leg-a,
 .board-cat.is-chasing .cat-leg-b {
-  animation: cat-leg-frame 0.32s steps(1) infinite;
+  animation: cat-quad-step 0.55s steps(2) infinite;
 }
 
 .board-cat.is-chasing .cat-leg-b {
@@ -719,14 +695,36 @@ body {
   display: none;
 }
 
-@keyframes cat-leg-frame {
+@keyframes cat-body-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes cat-tail-walk {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes cat-quad-step {
   0%,
   49% {
     opacity: 1;
+    transform: translateY(0);
   }
   50%,
   100% {
     opacity: 0;
+    transform: translateY(1px);
   }
 }
 

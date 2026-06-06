@@ -66,7 +66,7 @@
   let activeNumber = null;
   let pencilMode = false;
   let zenMode = false;
-  let catMode = 0;
+  let catEnabled = false;
   let timerInterval = null;
   let timerRunning = false;
   let animateBoardReveal = false;
@@ -350,27 +350,20 @@
     }
   }
 
-  function setCatMode(mode) {
-    catMode = mode;
-    const active = mode > 0;
-    boardCat.hidden = !active;
-    boardCat.setAttribute("aria-hidden", active ? "false" : "true");
-    btnCat.classList.toggle("active", active);
-    btnCat.dataset.catMode = String(mode);
-    const label = CatModels.label(mode);
-    btnCat.title = active ? `Companion cat · ${label} (click to change)` : "Companion cat (click to enable)";
+  function setCatEnabled(enabled) {
+    catEnabled = enabled;
+    boardCat.hidden = !enabled;
+    boardCat.setAttribute("aria-hidden", enabled ? "false" : "true");
+    btnCat.classList.toggle("active", enabled);
+    btnCat.title = enabled ? "Hide companion cat" : "Companion cat";
     btnCat.setAttribute("aria-label", btnCat.title);
-    localStorage.setItem("sudoku-cat", String(mode));
-    if (active) {
-      CatCompanion.setModel(mode);
-      CatCompanion.start();
-    } else {
-      CatCompanion.stop();
-    }
+    localStorage.setItem("sudoku-cat", enabled ? "1" : "0");
+    if (enabled) CatCompanion.start();
+    else CatCompanion.stop();
   }
 
-  function cycleCatMode() {
-    setCatMode((catMode + 1) % 4);
+  function toggleCat() {
+    setCatEnabled(!catEnabled);
   }
 
   function initPreferences() {
@@ -378,8 +371,8 @@
     if (savedTheme === "dark") savedTheme = "oled";
     setTheme(THEMES.some((t) => t.id === savedTheme) ? savedTheme : DEFAULT_THEME);
     setZen(localStorage.getItem("sudoku-zen") === "1");
-    const savedCat = parseInt(localStorage.getItem("sudoku-cat") || "0", 10);
-    setCatMode(Number.isFinite(savedCat) && savedCat >= 0 && savedCat <= 3 ? savedCat : 0);
+    const savedCat = localStorage.getItem("sudoku-cat");
+    setCatEnabled(savedCat === "1" || (parseInt(savedCat, 10) || 0) > 0);
     Settings.load();
   }
 
@@ -1182,7 +1175,7 @@
     closeConfirm();
   });
   menuScrim.addEventListener("click", closeMenu);
-  btnCat.addEventListener("click", () => cycleCatMode());
+  btnCat.addEventListener("click", () => toggleCat());
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);

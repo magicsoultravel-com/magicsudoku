@@ -1,12 +1,12 @@
 (() => {
-  const WALK_SPEED = 16;
-  const CHASE_SPEED = 36;
-  const WALK_MIN_MS = 7000;
-  const WALK_MAX_MS = 14000;
-  const FALL_SPEED = 80;
-  const APPROACH_GAP = 26;
-  const FLIP_DURATION = 0.65;
-  const LAND_DURATION = 0.2;
+  const WALK_SPEED = 10;
+  const CHASE_SPEED = 22;
+  const WALK_MIN_MS = 8000;
+  const WALK_MAX_MS = 15000;
+  const FALL_SPEED = 70;
+  const APPROACH_GAP = 24;
+  const FLIP_DURATION = 0.38;
+  const LAND_DURATION = 0.16;
 
   let boardWrap = null;
   let boardCat = null;
@@ -283,7 +283,7 @@
       const t = Math.min(fallAnim.phaseElapsed / fallAnim.dropDuration, 1);
       const x = fallAnim.startX + (fallAnim.stopX - fallAnim.startX) * t;
       const y = fallAnim.startY + (fallAnim.stopY - fallAnim.startY) * t;
-      applyFreePosition(x, y, 180, false);
+      applyFreePosition(x, y, fallAnim.targetHeading + 180, false);
       if (t >= 1) {
         fallAnim.phase = "flip";
         fallAnim.phaseElapsed = 0;
@@ -293,9 +293,9 @@
 
     if (fallAnim.phase === "flip") {
       const t = Math.min(fallAnim.phaseElapsed / fallAnim.flipDuration, 1);
-      const ease = 1 - Math.pow(1 - t, 4);
-      const rotation = 180 + ease * (360 + fallAnim.targetHeading);
-      applyFreePosition(fallAnim.stopX, fallAnim.stopY, rotation, false);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const rotation = fallAnim.targetHeading + 180 + ease * 180;
+      applyFreePosition(fallAnim.stopX, fallAnim.stopY, rotation, t > 0.85);
       if (t >= 1) {
         fallAnim.phase = "land";
         fallAnim.phaseElapsed = 0;
@@ -465,12 +465,6 @@
     setPose("walk");
   }
 
-  function setModel(modelId) {
-    if (window.CatModels) {
-      CatModels.show(boardCat, modelId);
-    }
-  }
-
   function init(wrap, catEl, mouseNode) {
     boardWrap = wrap;
     boardCat = catEl;
@@ -479,5 +473,5 @@
     bindPointer();
   }
 
-  window.CatCompanion = { init, start, stop, setModel };
+  window.CatCompanion = { init, start, stop };
 })();
