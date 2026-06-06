@@ -508,8 +508,8 @@ body {
 .board-cat {
   position: absolute;
   z-index: 2;
-  width: 48px;
-  height: 33px;
+  width: 52px;
+  height: 36px;
   margin: 0;
   pointer-events: none;
   color: var(--board-cat-color, var(--text));
@@ -538,9 +538,9 @@ body {
 
 .board-cat .cat-sprite {
   display: block;
-  width: 48px;
-  height: 33px;
-  image-rendering: auto;
+  width: 52px;
+  height: 36px;
+  overflow: visible;
 }
 
 .board-cat .cat-sprite .cf {
@@ -549,16 +549,26 @@ body {
 
 .board-cat .cat-sprite .cl {
   fill: var(--surface);
-  opacity: 0.92;
+  opacity: 0.88;
 }
 
 .board-cat .cat-sprite .cs {
-  fill: currentColor;
-  opacity: 0.35;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.6;
+  opacity: 0.32;
 }
 
 .board-cat .cat-sprite .ce {
   fill: var(--accent);
+}
+
+.board-cat .cat-sprite .cw {
+  stroke: currentColor;
+  stroke-width: 0.45;
+  fill: none;
+  opacity: 0.42;
+  stroke-linecap: round;
 }
 
 .board-cat .cat-view-front {
@@ -636,7 +646,7 @@ body {
 }
 
 .board-cat.is-lying .cat-sprite {
-  transform: scale(1.06, 0.72) translateY(3px);
+  transform: scale(1.04, 0.68) translateY(4px);
 }
 
 .board-cat.is-lying .cat-legs {
