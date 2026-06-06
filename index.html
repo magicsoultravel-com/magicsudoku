@@ -41,7 +41,7 @@
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h6v2a4 4 0 0 1-6 0v-2z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 9.5v3M6.5 12.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </button>
         <button id="btn-companion-cat" class="btn btn-icon" type="button" aria-label="Companion cat" title="Companion cat">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9.5Q.5 7 2 5.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><rect x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/><rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/><path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/><path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/><rect x="11.5" y="6.2" width="1" height="1" rx=".15" fill="var(--bg)"/></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><rect x="1" y="9" width="1" height="1" fill="currentColor"/><rect x="2" y="8" width="1" height="1" fill="currentColor"/><rect x="3" y="7" width="1" height="1" fill="currentColor"/><rect x="4" y="6" width="1" height="1" fill="currentColor"/><rect x="5" y="5" width="6" height="1" fill="currentColor"/><rect x="11" y="4" width="2" height="1" fill="currentColor"/><rect x="13" y="5" width="2" height="3" fill="currentColor"/><rect x="5" y="6" width="8" height="2" fill="currentColor"/><rect x="6" y="8" width="6" height="1" fill="currentColor"/><rect x="7" y="9" width="2" height="2" fill="currentColor"/><rect x="10" y="9" width="2" height="2" fill="currentColor"/><rect x="12" y="6" width="1" height="1" fill="var(--accent)"/></svg>
         </button>
         <button id="btn-settings" class="btn btn-icon" type="button" aria-label="Appearance settings" title="Appearance">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 4.85A3.15 3.15 0 1 0 8 11.15 3.15 3.15 0 0 0 8 4.85zm4.78 1.93 1.1-.82-.82-1.43-1.28.47a4.6 4.6 0 0 0-1.1-.64l-.22-1.34H7.24l-.22 1.34c-.39.18-.75.38-1.1.64l-1.28-.47-.82 1.43 1.1.82a4.5 4.5 0 0 0-.02 1.28l-1.1.82.82 1.43 1.28-.47c.35.26.71.46 1.1.64l.22 1.34h1.52l.22-1.34c.39-.18.75-.38 1.1-.64l1.28.47.82-1.43-1.1-.82a4.5 4.5 0 0 0 .02-1.28z"/></svg>
@@ -79,25 +79,53 @@
         <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
         <div id="board-cat" class="board-cat" data-pose="walk" hidden aria-hidden="true">
           <div class="cat-speech" hidden aria-hidden="true"><span>Meow!</span></div>
-          <svg class="cat-sprite" viewBox="0 0 16 16" width="22" height="22" aria-hidden="true">
-            <path class="cat-tail" d="M1.5 9.5Q.5 7 2 5.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-            <rect class="cat-body" x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/>
+          <svg class="cat-sprite" viewBox="0 0 32 20" width="32" height="20" aria-hidden="true" shape-rendering="crispEdges">
+            <g class="cat-tail">
+              <rect class="cf" x="1" y="12" width="1" height="1"/><rect class="cf" x="2" y="11" width="1" height="1"/>
+              <rect class="cf" x="3" y="10" width="1" height="1"/><rect class="cf" x="4" y="9" width="1" height="1"/>
+              <rect class="cf" x="5" y="8" width="1" height="1"/><rect class="cf" x="6" y="7" width="1" height="1"/>
+              <rect class="cf" x="7" y="6" width="1" height="1"/><rect class="cf" x="8" y="5" width="1" height="1"/>
+              <rect class="cf" x="9" y="4" width="1" height="1"/><rect class="cf" x="10" y="3" width="1" height="1"/>
+            </g>
+            <g class="cat-body">
+              <rect class="cs" x="9" y="7" width="2" height="1"/><rect class="cs" x="11" y="6" width="2" height="1"/>
+              <rect class="cs" x="13" y="5" width="2" height="1"/><rect class="cs" x="10" y="8" width="3" height="1"/>
+              <rect class="cs" x="11" y="9" width="4" height="1"/><rect class="cs" x="12" y="10" width="5" height="1"/>
+              <rect class="cf" x="10" y="7" width="14" height="1"/><rect class="cf" x="9" y="8" width="16" height="1"/>
+              <rect class="cf" x="9" y="9" width="17" height="1"/><rect class="cf" x="9" y="10" width="16" height="1"/>
+              <rect class="cf" x="10" y="11" width="14" height="1"/><rect class="cf" x="11" y="12" width="12" height="1"/>
+              <rect class="cl" x="12" y="8" width="8" height="1"/><rect class="cl" x="11" y="9" width="9" height="1"/>
+              <rect class="cl" x="12" y="10" width="7" height="1"/><rect class="cl" x="13" y="11" width="5" height="1"/>
+            </g>
             <g class="cat-head">
-              <rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/>
-              <path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/>
-              <path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/>
-              <rect x="11.5" y="6.2" width="1.2" height="1.2" rx=".2" fill="var(--bg)"/>
+              <rect class="cf" x="22" y="3" width="1" height="1"/><rect class="cf" x="23" y="2" width="2" height="1"/>
+              <rect class="cf" x="25" y="2" width="1" height="1"/><rect class="cf" x="26" y="3" width="2" height="1"/>
+              <rect class="cf" x="28" y="4" width="1" height="1"/><rect class="cf" x="20" y="4" width="9" height="1"/>
+              <rect class="cf" x="19" y="5" width="11" height="1"/><rect class="cf" x="19" y="6" width="12" height="1"/>
+              <rect class="cf" x="19" y="7" width="11" height="1"/><rect class="cf" x="20" y="8" width="9" height="1"/>
+              <rect class="cl" x="21" y="5" width="7" height="1"/><rect class="cl" x="20" y="6" width="8" height="1"/>
+              <rect class="cl" x="21" y="7" width="6" height="1"/>
+              <rect class="ce" x="26" y="6" width="1" height="1"/><rect class="ce" x="27" y="6" width="1" height="1"/>
+              <rect class="cn" x="28" y="7" width="1" height="1"/>
             </g>
             <g class="cat-legs">
-              <rect class="cat-leg cat-leg-a" x="5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
-              <rect class="cat-leg cat-leg-b" x="8.5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
+              <g class="cat-leg cat-leg-a">
+                <rect class="cl" x="14" y="13" width="2" height="1"/><rect class="cf" x="14" y="14" width="2" height="2"/>
+                <rect class="cl" x="18" y="13" width="2" height="1"/><rect class="cf" x="18" y="14" width="2" height="2"/>
+              </g>
+              <g class="cat-leg cat-leg-b">
+                <rect class="cl" x="15" y="13" width="2" height="1"/><rect class="cf" x="15" y="14" width="2" height="2"/>
+                <rect class="cl" x="19" y="13" width="2" height="1"/><rect class="cf" x="19" y="14" width="2" height="2"/>
+              </g>
             </g>
           </svg>
         </div>
-        <svg id="board-cat-mouse" class="cat-mouse" viewBox="0 0 12 12" width="10" height="10" hidden aria-hidden="true">
-          <ellipse cx="6" cy="6.5" rx="4" ry="3" fill="currentColor" opacity="0.75"/>
-          <circle cx="9.2" cy="4.8" r="1.1" fill="currentColor" opacity="0.75"/>
-          <path d="M2 6.5Q.5 5.5 1 4" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.75"/>
+        <svg id="board-cat-mouse" class="cat-mouse" viewBox="0 0 10 8" width="10" height="8" hidden aria-hidden="true" shape-rendering="crispEdges">
+          <rect class="cf" x="2" y="2" width="6" height="4"/>
+          <rect class="cf" x="7" y="1" width="2" height="2"/>
+          <rect class="ce" x="8" y="2" width="1" height="1"/>
+          <rect class="cf" x="1" y="4" width="1" height="1"/><rect class="cf" x="0" y="3" width="1" height="1"/>
+          <rect class="cf" x="3" y="6" width="1" height="1"/><rect class="cf" x="6" y="6" width="1" height="1"/>
         </svg>
       </div>
 

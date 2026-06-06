@@ -1,6 +1,4 @@
 (() => {
-  const CAT_SIZE = 22;
-  const OUTSET = 18;
   const WALK_SPEED = 16;
   const CHASE_SPEED = 36;
   const WALK_MIN_MS = 7000;
@@ -52,21 +50,21 @@
 
     if (d < top) {
       x = d;
-      y = -OUTSET;
+      y = 0;
       heading = 0;
     } else if (d < top + right) {
       const seg = d - top;
-      x = boardW + OUTSET;
+      x = boardW;
       y = seg;
       heading = 90;
     } else if (d < top + right + bottom) {
       const seg = d - top - right;
       x = boardW - seg;
-      y = boardH + OUTSET;
+      y = boardH;
       heading = 180;
     } else {
       const seg = d - top - right - bottom;
-      x = -OUTSET;
+      x = 0;
       y = boardH - seg;
       heading = -90;
     }
@@ -78,7 +76,7 @@
     const { x, y, heading } = positionOnPerimeter(dist);
     boardCat.style.left = `${x}px`;
     boardCat.style.top = `${y}px`;
-    boardCat.style.transform = `translate(-50%, -50%) rotate(${heading}deg)`;
+    boardCat.style.transform = `translate(-50%, -100%) rotate(${heading}deg)`;
   }
 
   function setPose(pose) {
@@ -101,7 +99,7 @@
     mouseEl.hidden = false;
     mouseEl.style.left = `${x}px`;
     mouseEl.style.top = `${y}px`;
-    mouseEl.style.transform = `translate(-50%, -50%) rotate(${heading}deg)`;
+    mouseEl.style.transform = `translate(-50%, -100%) rotate(${heading}deg)`;
   }
 
   function hideSpeech() {
