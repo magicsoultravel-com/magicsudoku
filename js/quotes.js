@@ -1,6 +1,43 @@
 const Quotes = (() => {
   const INDEX_KEY = "sudoku-quote-index";
 
+  const AUTHOR_CIRCA = {
+    "Marcus Aurelius": "c. 121–180",
+    Seneca: "c. 4 BC–65 AD",
+    Epictetus: "c. 50–135",
+    Socrates: "c. 470–399 BC",
+    Plato: "c. 428–348 BC",
+    "Dalai Lama": "b. 1935",
+    Buddha: "c. 563–483 BC",
+    "Ram Dass": "1931–2019",
+    "Lao Tzu": "c. 6th century BC",
+    Confucius: "c. 551–479 BC",
+    "Eleanor Roosevelt": "1884–1962",
+    "Dean Inge": "1860–1954",
+    "Mark Twain": "1835–1910",
+    "Leonardo da Vinci": "1452–1519",
+    "Thich Nhat Hanh": "1926–2022",
+    Rumi: "1207–1273",
+    "Mary Anne Radmacher": "b. 1955",
+    "Deepak Chopra": "b. 1946",
+    "Jon Kabat-Zinn": "b. 1944",
+    "Caroline Myss": "b. 1952",
+    "Ma Jaya Sati Bhagavati": "1940–2012",
+    "Jean-Jacques Rousseau": "1712–1778",
+    "Prasad Mahes": "c. contemporary",
+    "Naval Ravikant": "b. 1974",
+    "Paramahansa Yogananda": "1893–1952",
+    "William Wordsworth": "1770–1850",
+    "Anne Lamott": "b. 1954",
+    "Oprah Winfrey": "b. 1954",
+    "William James": "1842–1910",
+    "Ralph Waldo Emerson": "1803–1882",
+    "Johann Wolfgang von Goethe": "1749–1832",
+    "Chinese proverb": "origin unknown",
+    "Hermann Hesse": "1877–1962",
+    "Sri Chinmoy": "1931–2007",
+  };
+
   const LIST = [
     { text: "The happiness of your life depends upon the quality of your thoughts.", author: "Marcus Aurelius" },
     { text: "You have power over your mind — not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius" },
@@ -127,12 +164,21 @@ const Quotes = (() => {
     { text: "Choose not to be harmed — and you won't feel harmed. Don't feel harmed — and you haven't been.", author: "Marcus Aurelius" },
   ];
 
+  function circaFor(entry) {
+    return entry.circa || AUTHOR_CIRCA[entry.author] || "date unknown";
+  }
+
+  function formatAttribution(entry) {
+    return `${entry.author} · ${circaFor(entry)}`;
+  }
+
   function nextQuote() {
     let index = parseInt(localStorage.getItem(INDEX_KEY) || "0", 10);
     if (!Number.isFinite(index) || index < 0) index = 0;
-    const quote = LIST[index % LIST.length];
+    const entry = LIST[index % LIST.length];
     localStorage.setItem(INDEX_KEY, String((index + 1) % LIST.length));
-    return quote;
+    const circa = circaFor(entry);
+    return { text: entry.text, author: entry.author, circa, attribution: formatAttribution(entry) };
   }
 
   return { nextQuote, count: LIST.length };

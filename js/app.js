@@ -10,7 +10,8 @@
   const quoteSplash = document.getElementById("quote-splash");
   const quoteTextEl = document.getElementById("quote-text");
   const quoteAuthorEl = document.getElementById("quote-author");
-  const QUOTE_MIN_MS = 2600;
+  const quoteProceed = document.getElementById("quote-proceed");
+  const QUOTE_BUTTON_DELAY_MS = 2200;
   const QUOTE_FADE_MS = 280;
   const lessonsDialog = document.getElementById("lessons-dialog");
   const lessonsBasics = document.getElementById("lessons-basics");
@@ -70,29 +71,48 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  function waitForProceed() {
+    return new Promise((resolve) => {
+      const onProceed = () => {
+        quoteProceed.removeEventListener("click", onProceed);
+        resolve();
+      };
+      quoteProceed.addEventListener("click", onProceed);
+    });
+  }
+
   async function showQuoteSplash() {
     if (quoteSplashActive) return;
     quoteSplashActive = true;
 
     const quote = Quotes.nextQuote();
     quoteTextEl.textContent = quote.text;
-    quoteAuthorEl.textContent = quote.author;
+    quoteAuthorEl.textContent = quote.attribution;
 
+    quoteProceed.hidden = true;
+    quoteProceed.classList.remove("is-visible");
     quoteSplash.hidden = false;
     quoteSplash.classList.remove("is-hiding");
 
     await wait(20);
     quoteSplash.classList.add("is-visible");
 
-    await wait(QUOTE_MIN_MS);
+    await wait(QUOTE_BUTTON_DELAY_MS);
+    quoteProceed.hidden = false;
+    await wait(20);
+    quoteProceed.classList.add("is-visible");
+
+    await waitForProceed();
 
     quoteSplash.classList.add("is-hiding");
     quoteSplash.classList.remove("is-visible");
+    quoteProceed.classList.remove("is-visible");
     appEl.classList.add("is-ready");
 
     await wait(QUOTE_FADE_MS);
 
     quoteSplash.hidden = true;
+    quoteProceed.hidden = true;
     quoteSplash.classList.remove("is-hiding");
     quoteSplashActive = false;
   }
