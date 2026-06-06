@@ -9,16 +9,31 @@ const Settings = (() => {
   ];
 
   const FIELDS = [
-    { id: "borderStrong", label: "Outer borders", var: "--board-border-strong" },
-    { id: "border", label: "Grid lines", var: "--board-border" },
-    { id: "fontColor", label: "Numbers", var: "--board-font" },
-    { id: "highlightValue", label: "Match tint", var: "--board-highlight-value" },
-    { id: "highlightPeer", label: "Row/col tint", var: "--board-highlight-peer" },
+    { id: "borderStrong", label: "Outer borders", var: "--board-border-strong", themeVar: "--border-strong" },
+    { id: "border", label: "Grid lines", var: "--board-border", themeVar: "--border" },
+    { id: "fontColor", label: "Numbers", var: "--board-font", themeVar: "--user" },
+    { id: "highlightValue", label: "Match tint", var: "--board-highlight-value", themeVar: "--highlight-value" },
+    { id: "highlightPeer", label: "Row/col tint", var: "--board-highlight-peer", themeVar: "--highlight-peer" },
   ];
 
   let colors = {};
   let openMenu = null;
   let panelContainer = null;
+
+  function getField(id) {
+    return FIELDS.find((f) => f.id === id);
+  }
+
+  function getThemeColor(field) {
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(field.themeVar)
+      .trim();
+  }
+
+  function getResolvedColor(field) {
+    const custom = getColor(field.id);
+    return custom || getThemeColor(field);
+  }
 
   function load() {
     try {
@@ -84,11 +99,18 @@ const Settings = (() => {
     }
   }
 
-  function updateCurrentSwatch(swatch, fieldId) {
-    const value = getColor(fieldId);
-    swatch.classList.toggle("is-theme", !value);
-    if (value) swatch.style.backgroundColor = value;
-    else swatch.style.backgroundColor = "";
+  function updateCurrentSwatch(swatch, field) {
+    const custom = getColor(field.id);
+    const resolved = getResolvedColor(field);
+    swatch.style.backgroundColor = resolved;
+    swatch.classList.toggle("is-theme", !custom);
+    swatch.title = custom ? custom : `Theme default (${resolved})`;
+  }
+
+  function updateThemeDefaultBtn(btn, field) {
+    const themeColor = getThemeColor(field);
+    btn.style.backgroundColor = themeColor;
+    btn.title = `Theme default (${themeColor})`;
   }
 
   function buildPanel(container) {
@@ -129,11 +151,11 @@ const Settings = (() => {
       const defaultBtn = document.createElement("button");
       defaultBtn.type = "button";
       defaultBtn.className = "color-opt theme-default";
-      defaultBtn.title = "Theme default";
       defaultBtn.addEventListener("click", () => {
         setColor(field.id, "");
         closeAllMenus();
       });
+      updateThemeDefaultBtn(defaultBtn, field);
       grid.appendChild(defaultBtn);
 
       PRESETS.forEach((hex) => {
@@ -174,7 +196,7 @@ const Settings = (() => {
       item.append(head, menu);
       container.appendChild(item);
 
-      updateCurrentSwatch(current, field.id);
+      updateCurrentSwatch(current, field);
     });
 
     const resetBtn = document.createElement("button");
@@ -199,17 +221,28 @@ const Settings = (() => {
       if (!item) return;
 
       const swatch = item.querySelector(".color-current-swatch");
-      updateCurrentSwatch(swatch, field.id);
+      updateCurrentSwatch(swatch, field);
 
       const value = getColor(field.id);
       item.querySelectorAll(".color-opt:not(.theme-default)").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.color === value);
       });
-      item.querySelector(".theme-default")?.classList.toggle("active", !value);
+
+      const defaultBtn = item.querySelector(".theme-default");
+      if (defaultBtn) {
+        updateThemeDefaultBtn(defaultBtn, field);
+        defaultBtn.classList.toggle("active", !value);
+      }
 
       const picker = item.querySelector(".color-menu-picker");
-      if (picker && value) picker.value = value;
+      if (picker) {
+        picker.value = value || "#3b82f6";
+      }
     });
+  }
+
+  function onThemeChange() {
+    if (panelContainer) syncPanel(panelContainer);
   }
 
   return {
@@ -220,5 +253,6 @@ const Settings = (() => {
     buildPanel,
     syncPanel,
     closeAllMenus,
+    onThemeChange,
   };
 })();

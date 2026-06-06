@@ -115,6 +115,7 @@
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("sudoku-theme", theme);
     if (themeSelect) themeSelect.value = theme;
+    Settings.onThemeChange();
   }
 
   function resetAppearance() {
