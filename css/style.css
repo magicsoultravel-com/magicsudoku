@@ -396,8 +396,8 @@ body {
 .board-cat {
   position: absolute;
   z-index: 2;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 28px;
   margin: 0;
   pointer-events: none;
   color: var(--text);
@@ -426,8 +426,8 @@ body {
 
 .board-cat .cat-sprite {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 28px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -519,7 +519,7 @@ body {
 }
 
 .board-cat.is-lying .cat-sprite {
-  transform: scale(1.08, 0.7) translateY(4px);
+  transform: scale(1.06, 0.72) translateY(3px);
 }
 
 .board-cat.is-lying .cat-legs {
@@ -960,9 +960,20 @@ body {
 }
 
 .footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   font-size: 0.75rem;
   color: var(--text-muted);
   min-height: 1.25rem;
+}
+
+.app-version {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
 }
 
 .status.ok {

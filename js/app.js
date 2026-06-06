@@ -1153,6 +1153,11 @@
 
   CatCompanion.init(boardWrap, boardCat, document.getElementById("board-cat-mouse"));
 
+  const versionEl = document.getElementById("app-version");
+  if (versionEl && window.APP_VERSION) {
+    versionEl.textContent = window.APP_VERSION;
+  }
+
   async function boot() {
     initPreferences();
     loadStats();

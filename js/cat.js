@@ -3,10 +3,10 @@
   const CHASE_SPEED = 36;
   const WALK_MIN_MS = 7000;
   const WALK_MAX_MS = 14000;
-  const FALL_SPEED = 72;
-  const FALL_MIN_S = 1.6;
-  const FALL_MAX_S = 4.2;
-  const FLIP_START = 0.62;
+  const FALL_SPEED = 80;
+  const APPROACH_GAP = 26;
+  const FLIP_DURATION = 0.65;
+  const LAND_DURATION = 0.2;
 
   let boardWrap = null;
   let boardCat = null;
@@ -228,10 +228,20 @@
 
   function startFall(fromX, fromY) {
     const target = closestPerimeterPoint(fromX, fromY);
-    const dist = target.dist;
-    const duration = reducedMotion
-      ? 0.01
-      : Math.max(FALL_MIN_S, Math.min(FALL_MAX_S, dist / FALL_SPEED));
+    const dx = target.x - fromX;
+    const dy = target.y - fromY;
+    const totalDist = Math.hypot(dx, dy);
+    let stopX = target.x;
+    let stopY = target.y;
+
+    if (totalDist > APPROACH_GAP) {
+      const ratio = (totalDist - APPROACH_GAP) / totalDist;
+      stopX = fromX + dx * ratio;
+      stopY = fromY + dy * ratio;
+    }
+
+    const dropDist = Math.hypot(stopX - fromX, stopY - fromY);
+    const dropDuration = reducedMotion ? 0.01 : Math.max(0.9, Math.min(3.6, dropDist / FALL_SPEED));
 
     interaction = "fall";
     state = "fall";
@@ -240,14 +250,19 @@
     hideMouse();
 
     fallAnim = {
+      phase: "drop",
       startX: fromX,
       startY: fromY,
+      stopX,
+      stopY,
       targetX: target.x,
       targetY: target.y,
       targetHeading: target.heading,
       targetProgress: target.progress,
-      duration,
-      elapsed: 0,
+      dropDuration,
+      flipDuration: reducedMotion ? 0.01 : FLIP_DURATION,
+      landDuration: reducedMotion ? 0.01 : LAND_DURATION,
+      phaseElapsed: 0,
     };
   }
 
@@ -262,34 +277,36 @@
   function tickFall(dt) {
     if (!fallAnim) return;
 
-    fallAnim.elapsed += dt;
-    const t = Math.min(fallAnim.elapsed / fallAnim.duration, 1);
+    fallAnim.phaseElapsed += dt;
 
-    const x = fallAnim.startX + (fallAnim.targetX - fallAnim.startX) * t;
-    const y = fallAnim.startY + (fallAnim.targetY - fallAnim.startY) * t;
-
-    let rotation = 180;
-    let feetDown = false;
-
-    if (reducedMotion) {
-      rotation = fallAnim.targetHeading;
-      feetDown = true;
-    } else if (t < FLIP_START) {
-      rotation = 180;
-    } else if (t >= 1) {
-      rotation = fallAnim.targetHeading;
-      feetDown = true;
-    } else {
-      const flipT = (t - FLIP_START) / (1 - FLIP_START);
-      const flipEase = 1 - Math.pow(1 - flipT, 4);
-      const flipFrom = 180;
-      const flipTo = fallAnim.targetHeading + 540;
-      rotation = flipFrom + (flipTo - flipFrom) * flipEase;
-      feetDown = flipT > 0.82;
+    if (fallAnim.phase === "drop") {
+      const t = Math.min(fallAnim.phaseElapsed / fallAnim.dropDuration, 1);
+      const x = fallAnim.startX + (fallAnim.stopX - fallAnim.startX) * t;
+      const y = fallAnim.startY + (fallAnim.stopY - fallAnim.startY) * t;
+      applyFreePosition(x, y, 180, false);
+      if (t >= 1) {
+        fallAnim.phase = "flip";
+        fallAnim.phaseElapsed = 0;
+      }
+      return;
     }
 
-    applyFreePosition(x, y, rotation, feetDown);
+    if (fallAnim.phase === "flip") {
+      const t = Math.min(fallAnim.phaseElapsed / fallAnim.flipDuration, 1);
+      const ease = 1 - Math.pow(1 - t, 4);
+      const rotation = 180 + ease * (360 + fallAnim.targetHeading);
+      applyFreePosition(fallAnim.stopX, fallAnim.stopY, rotation, false);
+      if (t >= 1) {
+        fallAnim.phase = "land";
+        fallAnim.phaseElapsed = 0;
+      }
+      return;
+    }
 
+    const t = Math.min(fallAnim.phaseElapsed / fallAnim.landDuration, 1);
+    const x = fallAnim.stopX + (fallAnim.targetX - fallAnim.stopX) * t;
+    const y = fallAnim.stopY + (fallAnim.targetY - fallAnim.stopY) * t;
+    applyFreePosition(x, y, fallAnim.targetHeading, true);
     if (t >= 1) {
       finishFall();
     }
