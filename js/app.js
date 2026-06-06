@@ -287,9 +287,7 @@
   }
 
   function getHighlightNumber() {
-    if (activeNumber) return activeNumber;
-    if (selected) return puzzle[selected.row][selected.col] || null;
-    return null;
+    return activeNumber;
   }
 
   function linesForValue(num) {
@@ -404,11 +402,25 @@
       saveGame();
       return;
     }
-    if (selected && !gameWon && !given[selected.row][selected.col]) {
+
+    if (activeNumber === num) {
+      activeNumber = null;
+      renderBoard();
+      saveGame();
+      return;
+    }
+
+    if (
+      selected &&
+      !gameWon &&
+      !given[selected.row][selected.col] &&
+      puzzle[selected.row][selected.col] === 0
+    ) {
       placeNumber(num);
       return;
     }
-    activeNumber = activeNumber === num ? null : num;
+
+    activeNumber = num;
     renderBoard();
     saveGame();
   }
@@ -433,7 +445,7 @@
     }
 
     const val = puzzle[row][col];
-    if (val && !pencilMode) activeNumber = val;
+    if (!pencilMode) activeNumber = val || null;
     clearErrors();
     renderBoard();
     saveGame();
