@@ -5,7 +5,7 @@ const Lessons = [
   },
   {
     title: "How puzzles are made",
-    body: "Magic Sudoku does not use a fixed puzzle list. Every game is procedurally generated — a valid grid is built, then clues are removed while keeping exactly one solution. In practice that means a practically unlimited supply of unique puzzles.",
+    body: "Magic Sudoku does not use a fixed puzzle list. Every game is procedurally generated from a seed (shown below the board). The same seed and difficulty always produces the same puzzle, so you can save or share seeds to replay or track games.",
   },
   {
     title: "Start with certainties",

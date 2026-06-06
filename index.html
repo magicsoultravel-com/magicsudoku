@@ -31,7 +31,17 @@
     </header>
 
     <main class="main">
-      <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+      <div class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+      </div>
+
+      <div id="seed-panel" class="seeds">
+        <div class="seeds-head">
+          <span class="seeds-label">Seed</span>
+          <span id="current-seed" class="current-seed">—</span>
+        </div>
+        <ol id="seed-list" class="seed-list" aria-label="Last 10 seeds"></ol>
+      </div>
 
       <div class="controls">
         <div id="numpad" class="numpad" role="group" aria-label="Number pad"></div>

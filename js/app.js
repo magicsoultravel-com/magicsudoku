@@ -13,6 +13,12 @@
   const btnRedo = document.getElementById("btn-redo");
   const btnPencil = document.getElementById("btn-pencil");
   const btnZen = document.getElementById("btn-zen");
+  const seedPanel = document.getElementById("seed-panel");
+  const seedList = document.getElementById("seed-list");
+  const currentSeedEl = document.getElementById("current-seed");
+
+  const SEED_KEY = "sudoku-seeds";
+  const MAX_SEEDS = 10;
 
   let puzzle = [];
   let solution = [];
@@ -27,6 +33,9 @@
   let gameWon = false;
   let history = [];
   let future = [];
+  let currentSeed = null;
+  let currentDifficulty = null;
+  let seedHistory = [];
 
   function emptyNotes() {
     return Array.from({ length: 9 }, () =>
@@ -144,7 +153,13 @@
       parts.push("Empty cell");
     }
     if (!given[row][col] && !gameWon) {
-      parts.push(pencilMode ? "Pencil mode on — tap a number" : "Tap a number to fill");
+      if (pencilMode && activeNumber) {
+        parts.push(`Pencil ${activeNumber} — click to mark`);
+      } else if (pencilMode) {
+        parts.push("Pencil mode — pick a number first");
+      } else {
+        parts.push("Tap a number to fill");
+      }
     }
     return parts.join(" · ");
   }
@@ -275,6 +290,11 @@
   }
 
   function onNumpadClick(num) {
+    if (pencilMode) {
+      activeNumber = activeNumber === num ? null : num;
+      renderBoard();
+      return;
+    }
     if (selected && !gameWon && !given[selected.row][selected.col]) {
       placeNumber(num);
       return;
@@ -283,11 +303,26 @@
     renderBoard();
   }
 
+  function toggleNoteAt(row, col, num) {
+    if (given[row][col] || puzzle[row][col] !== 0 || gameWon) return;
+    pushHistory();
+    if (notes[row][col].has(num)) notes[row][col].delete(num);
+    else notes[row][col].add(num);
+    clearErrors();
+    renderBoard();
+  }
+
   function selectCell(row, col) {
     if (gameWon) return;
     selected = { row, col };
+
+    if (pencilMode && activeNumber && !given[row][col] && puzzle[row][col] === 0) {
+      toggleNoteAt(row, col, activeNumber);
+      return;
+    }
+
     const val = puzzle[row][col];
-    if (val) activeNumber = val;
+    if (val && !pencilMode) activeNumber = val;
     clearErrors();
     renderBoard();
   }
@@ -321,10 +356,9 @@
     const { row, col } = selected;
 
     if (pencilMode) {
-      pushHistory();
-      if (notes[row][col].has(num)) notes[row][col].delete(num);
-      else notes[row][col].add(num);
-      renderBoard();
+      activeNumber = num;
+      if (puzzle[row][col] === 0) toggleNoteAt(row, col, num);
+      else renderBoard();
       return;
     }
 
@@ -397,6 +431,43 @@
     updateUndoRedo();
   }
 
+  function loadSeedHistory() {
+    try {
+      seedHistory = JSON.parse(localStorage.getItem(SEED_KEY) || "[]");
+    } catch {
+      seedHistory = [];
+    }
+  }
+
+  function saveSeedHistory() {
+    localStorage.setItem(SEED_KEY, JSON.stringify(seedHistory));
+  }
+
+  function recordSeed(seed, difficulty) {
+    currentSeed = seed;
+    currentDifficulty = difficulty;
+    seedHistory = seedHistory.filter((e) => e.seed !== seed);
+    seedHistory.unshift({ seed, difficulty, at: Date.now() });
+    if (seedHistory.length > MAX_SEEDS) seedHistory.length = MAX_SEEDS;
+    saveSeedHistory();
+    renderSeeds();
+  }
+
+  function renderSeeds() {
+    currentSeedEl.textContent = currentSeed
+      ? `${currentSeed} · ${currentDifficulty}`
+      : "—";
+
+    seedList.innerHTML = "";
+    seedHistory.forEach((entry) => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.seed} · ${entry.difficulty}`;
+      if (entry.seed === currentSeed) li.classList.add("current");
+      li.title = new Date(entry.at).toLocaleString();
+      seedList.appendChild(li);
+    });
+  }
+
   function newGame() {
     gameWon = false;
     selected = null;
@@ -415,6 +486,7 @@
       solution = result.solution;
       given = result.given;
       notes = emptyNotes();
+      recordSeed(result.seed, result.difficulty);
       boardEl.style.opacity = "";
       setStatus("");
       renderBoard();
@@ -514,6 +586,8 @@
   document.addEventListener("keydown", handleKeydown);
 
   initPreferences();
+  loadSeedHistory();
+  renderSeeds();
   buildNumpad();
   newGame();
 })();

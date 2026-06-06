@@ -4,10 +4,36 @@ const Sudoku = (() => {
 
   const CLUES = { easy: 40, medium: 32, hard: 26 };
 
-  function shuffle(arr) {
+  function hashSeed(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function createSeed() {
+    const bytes = new Uint32Array(2);
+    crypto.getRandomValues(bytes);
+    return bytes[0].toString(36) + bytes[1].toString(36);
+  }
+
+  function shuffle(arr, rng) {
     const a = [...arr];
+    const rand = rng || Math.random;
     for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rand() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
@@ -35,8 +61,8 @@ const Sudoku = (() => {
     return true;
   }
 
-  function fillBox(grid, row, col) {
-    const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  function fillBox(grid, row, col, rng) {
+    const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], rng);
     let i = 0;
     for (let r = row; r < row + BOX; r++) {
       for (let c = col; c < col + BOX; c++) {
@@ -45,21 +71,22 @@ const Sudoku = (() => {
     }
   }
 
-  function fillDiagonal(grid) {
+  function fillDiagonal(grid, rng) {
     for (let i = 0; i < SIZE; i += BOX) {
-      fillBox(grid, i, i);
+      fillBox(grid, i, i, rng);
     }
   }
 
-  function solve(grid) {
+  function solve(grid, rng) {
+    const rand = rng || Math.random;
     for (let row = 0; row < SIZE; row++) {
       for (let col = 0; col < SIZE; col++) {
         if (grid[row][col] !== 0) continue;
-        const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], rand);
         for (const num of nums) {
           if (isValid(grid, row, col, num)) {
             grid[row][col] = num;
-            if (solve(grid)) return true;
+            if (solve(grid, rand)) return true;
             grid[row][col] = 0;
           }
         }
@@ -95,7 +122,7 @@ const Sudoku = (() => {
     return count;
   }
 
-  function createPuzzle(solution, clueCount) {
+  function createPuzzle(solution, clueCount, rng) {
     const puzzle = cloneGrid(solution);
     const cells = [];
     for (let r = 0; r < SIZE; r++) {
@@ -103,7 +130,7 @@ const Sudoku = (() => {
         cells.push([r, c]);
       }
     }
-    shuffle(cells);
+    shuffle(cells, rng);
 
     let removed = 0;
     const target = SIZE * SIZE - clueCount;
@@ -123,17 +150,20 @@ const Sudoku = (() => {
     return puzzle;
   }
 
-  function generate(difficulty = "medium") {
+  function generate(difficulty = "medium", seed = null) {
+    const actualSeed = seed || createSeed();
+    const rng = mulberry32(hashSeed(`${actualSeed}:${difficulty}`));
+
     const grid = emptyGrid();
-    fillDiagonal(grid);
-    solve(grid);
+    fillDiagonal(grid, rng);
+    solve(grid, rng);
     const solution = cloneGrid(grid);
     const clueCount = CLUES[difficulty] ?? CLUES.medium;
-    const puzzle = createPuzzle(solution, clueCount);
+    const puzzle = createPuzzle(solution, clueCount, rng);
 
     const given = puzzle.map((row) => row.map((v) => v !== 0));
 
-    return { puzzle, solution, given };
+    return { puzzle, solution, given, seed: actualSeed, difficulty };
   }
 
   function isComplete(grid) {
@@ -178,6 +208,7 @@ const Sudoku = (() => {
   return {
     SIZE,
     generate,
+    createSeed,
     isComplete,
     hasConflicts,
     findErrors,
