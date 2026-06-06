@@ -35,6 +35,8 @@
   const btnRedo = document.getElementById("btn-redo");
   const btnPencil = document.getElementById("btn-pencil");
   const btnZen = document.getElementById("btn-zen");
+  const btnCat = document.getElementById("btn-companion-cat");
+  const boardCat = document.getElementById("board-cat");
 
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
@@ -54,6 +56,7 @@
   let activeNumber = null;
   let pencilMode = false;
   let zenMode = false;
+  let catCompanion = false;
   let timerInterval = null;
   let timerRunning = false;
   let animateBoardReveal = false;
@@ -288,10 +291,19 @@
     }
   }
 
+  function setCatCompanion(enabled) {
+    catCompanion = enabled;
+    boardCat.hidden = !enabled;
+    btnCat.classList.toggle("active", enabled);
+    btnCat.title = enabled ? "Hide companion cat" : "Companion cat";
+    localStorage.setItem("sudoku-cat", enabled ? "1" : "0");
+  }
+
   function initPreferences() {
     const savedTheme = localStorage.getItem("sudoku-theme");
     setTheme(THEMES.includes(savedTheme) ? savedTheme : DEFAULT_THEME);
     setZen(localStorage.getItem("sudoku-zen") === "1");
+    setCatCompanion(localStorage.getItem("sudoku-cat") === "1");
     Settings.load();
   }
 
@@ -1094,6 +1106,7 @@
     closeConfirm();
   });
   menuScrim.addEventListener("click", closeMenu);
+  btnCat.addEventListener("click", () => setCatCompanion(!catCompanion));
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);

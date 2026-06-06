@@ -40,6 +40,9 @@
         <button id="btn-seeds" class="btn btn-icon" type="button" aria-label="Puzzle seeds" title="Puzzle seeds">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h6v2a4 4 0 0 1-6 0v-2z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 9.5v3M6.5 12.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </button>
+        <button id="btn-companion-cat" class="btn btn-icon" type="button" aria-label="Companion cat" title="Companion cat">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9.5Q.5 7 2 5.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><rect x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/><rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/><path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/><path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/><rect x="11.5" y="6.2" width="1" height="1" rx=".15" fill="var(--bg)"/></svg>
+        </button>
         <button id="btn-settings" class="btn btn-icon" type="button" aria-label="Appearance settings" title="Appearance">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 4.85A3.15 3.15 0 1 0 8 11.15 3.15 3.15 0 0 0 8 4.85zm4.78 1.93 1.1-.82-.82-1.43-1.28.47a4.6 4.6 0 0 0-1.1-.64l-.22-1.34H7.24l-.22 1.34c-.39.18-.75.38-1.1.64l-1.28-.47-.82 1.43 1.1.82a4.5 4.5 0 0 0-.02 1.28l-1.1.82.82 1.43 1.28-.47c.35.26.71.46 1.1.64l.22 1.34h1.52l.22-1.34c.39-.18.75-.38 1.1-.64l1.28.47.82-1.43-1.1-.82a4.5 4.5 0 0 0 .02-1.28z"/></svg>
         </button>
@@ -74,6 +77,20 @@
     <main class="main">
       <div class="board-wrap">
         <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+        <div id="board-cat" class="board-cat" hidden aria-hidden="true">
+          <svg class="cat-sprite" viewBox="0 0 16 16" width="22" height="22" aria-hidden="true">
+            <path class="cat-tail" d="M1.5 9.5Q.5 7 2 5.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+            <rect x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/>
+            <rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/>
+            <path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/>
+            <path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/>
+            <rect x="11.5" y="6.2" width="1.2" height="1.2" rx=".2" fill="var(--bg)"/>
+            <g class="cat-legs">
+              <rect class="cat-leg cat-leg-a" x="5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
+              <rect class="cat-leg cat-leg-b" x="8.5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
+            </g>
+          </svg>
+        </div>
       </div>
 
       <div class="controls bottom-interface">

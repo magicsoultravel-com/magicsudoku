@@ -392,6 +392,132 @@ body {
   pointer-events: none;
 }
 
+.board-cat {
+  position: absolute;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  pointer-events: none;
+  color: var(--text);
+  animation: cat-walk-perimeter 22s linear infinite;
+}
+
+.board-cat[hidden] {
+  display: none;
+}
+
+.board-cat .cat-sprite {
+  display: block;
+  width: 22px;
+  height: 22px;
+  transform-origin: 55% 60%;
+  animation: cat-bob 0.36s ease-in-out infinite;
+}
+
+.board-cat .cat-leg-a {
+  animation: cat-leg-a 0.36s steps(2) infinite;
+}
+
+.board-cat .cat-leg-b {
+  animation: cat-leg-b 0.36s steps(2) infinite;
+}
+
+@keyframes cat-walk-perimeter {
+  0% {
+    left: 0%;
+    top: 0%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  24.99% {
+    left: 100%;
+    top: 0%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    left: 100%;
+    top: 0%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  49.99% {
+    left: 100%;
+    top: 100%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+  50% {
+    left: 100%;
+    top: 100%;
+    transform: translate(-50%, -50%) rotate(180deg);
+  }
+  74.99% {
+    left: 0%;
+    top: 100%;
+    transform: translate(-50%, -50%) rotate(180deg);
+  }
+  75% {
+    left: 0%;
+    top: 100%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+  }
+  99.99% {
+    left: 0%;
+    top: 0%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+  }
+  100% {
+    left: 0%;
+    top: 0%;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+}
+
+@keyframes cat-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes cat-leg-a {
+  0%,
+  49% {
+    transform: translateY(0);
+  }
+  50%,
+  100% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes cat-leg-b {
+  0%,
+  49% {
+    transform: translateY(-1.5px);
+  }
+  50%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-cat {
+    animation: none;
+    left: 50%;
+    top: 0%;
+    transform: translate(-50%, -50%);
+  }
+
+  .board-cat .cat-sprite,
+  .board-cat .cat-leg-a,
+  .board-cat .cat-leg-b {
+    animation: none;
+  }
+}
+
 @keyframes cell-reveal {
   from {
     opacity: 0;
