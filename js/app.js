@@ -437,15 +437,23 @@
 
   function selectCell(row, col) {
     if (gameWon) return;
-    selected = { row, col };
 
     if (pencilMode && activeNumber && !given[row][col] && puzzle[row][col] === 0) {
+      selected = { row, col };
       toggleNoteAt(row, col, activeNumber);
       return;
     }
 
-    const val = puzzle[row][col];
-    if (!pencilMode) activeNumber = val || null;
+    if (selected && selected.row === row && selected.col === col) {
+      selected = null;
+      activeNumber = null;
+      clearErrors();
+      renderBoard();
+      saveGame();
+      return;
+    }
+
+    selected = { row, col };
     clearErrors();
     renderBoard();
     saveGame();
