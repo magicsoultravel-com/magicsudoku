@@ -12,8 +12,8 @@ const Settings = (() => {
     { id: "borderStrong", label: "Outer borders", var: "--board-border-strong", themeVar: "--border-strong" },
     { id: "border", label: "Grid lines", var: "--board-border", themeVar: "--border" },
     { id: "fontColor", label: "Numbers", var: "--board-font", themeVar: "--user" },
-    { id: "highlightValue", label: "Match tint", var: "--board-highlight-value", themeVar: "--highlight-value" },
-    { id: "highlightPeer", label: "Row/col tint", var: "--board-highlight-peer", themeVar: "--highlight-peer" },
+    { id: "highlightValue", label: "Selection tint", var: "--board-highlight-value", themeVar: "--highlight-value" },
+    { id: "highlightPeer", label: "Blocked tint", var: "--board-highlight-peer", themeVar: "--highlight-peer" },
   ];
 
   let colors = {};

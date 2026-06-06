@@ -415,28 +415,18 @@ body {
 }
 
 .cell.selected {
-  background: var(--highlight) !important;
+  background: var(--board-highlight-value, var(--highlight)) !important;
   box-shadow: inset 0 0 0 2px var(--accent);
   z-index: 1;
 }
 
-.cell.peer {
-  background: var(--board-highlight-peer, var(--highlight-peer));
+.cell.blocked {
+  background: var(--board-highlight-peer, var(--highlight-peer)) !important;
 }
 
-.cell.value-match {
-  background: var(--board-highlight-value, var(--highlight-value));
-  color: var(--board-font, var(--user));
-  font-weight: 600;
-}
-
-.cell.value-match.given {
-  color: var(--board-font, var(--given));
-  font-weight: 600;
-}
-
-.cell.value-line {
-  background: var(--board-highlight-peer, var(--highlight-value-line));
+.cell.blocked .note {
+  color: var(--text-muted);
+  opacity: 0.65;
 }
 
 .cell.error {
@@ -471,11 +461,6 @@ body {
   font-size: clamp(0.45rem, 2vw, 0.5625rem);
   color: var(--note);
   line-height: 1;
-}
-
-.note.active {
-  color: var(--accent);
-  font-weight: 700;
 }
 
 .controls {

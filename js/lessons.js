@@ -29,7 +29,7 @@ const LessonsBasics = [
   },
   {
     title: "When stuck",
-    body: "Use Check to verify mistakes without revealing answers. Highlight a number on the numpad to see every instance on the board and scan its rows and columns.",
+    body: "Use Check to verify mistakes without revealing answers. Select a number on the numpad to dim empty cells where that number can no longer go.",
   },
 ];
 

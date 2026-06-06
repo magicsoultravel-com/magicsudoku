@@ -307,7 +307,7 @@
       btn.className = "btn";
       btn.textContent = n;
       btn.dataset.num = n;
-      btn.title = `Highlight all ${n}s`;
+      btn.title = `Select ${n}`;
       btn.addEventListener("click", () => onNumpadClick(n));
       numpadEl.appendChild(btn);
     }
@@ -317,19 +317,17 @@
     return activeNumber;
   }
 
-  function linesForValue(num) {
-    const rows = new Set();
-    const cols = new Set();
-    if (!num) return { rows, cols };
+  function blockedCellsForNumber(num) {
+    const blocked = new Set();
+    if (!num) return blocked;
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
-        if (puzzle[r][c] === num) {
-          rows.add(r);
-          cols.add(c);
+        if (puzzle[r][c] === 0 && !Sudoku.isValid(puzzle, r, c, num)) {
+          blocked.add(`${r},${c}`);
         }
       }
     }
-    return { rows, cols };
+    return blocked;
   }
 
   function countRemaining(num) {
@@ -354,13 +352,11 @@
   function renderNotes(cellEl, row, col) {
     const grid = document.createElement("div");
     grid.className = "notes";
-    const hl = getHighlightNumber();
     for (let n = 1; n <= 9; n++) {
       const span = document.createElement("span");
       span.className = "note";
       if (notes[row][col].has(n)) {
         span.textContent = n;
-        if (hl === n) span.classList.add("active");
       }
       grid.appendChild(span);
     }
@@ -370,7 +366,7 @@
   function renderBoard() {
     boardEl.innerHTML = "";
     const hlNum = getHighlightNumber();
-    const { rows: hlRows, cols: hlCols } = linesForValue(hlNum);
+    const blocked = blockedCellsForNumber(hlNum);
 
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
@@ -394,21 +390,10 @@
 
         if (selected && selected.row === r && selected.col === c) {
           btn.classList.add("selected");
-        } else if (selected) {
-          const sameRow = selected.row === r;
-          const sameCol = selected.col === c;
-          const sameBox =
-            Math.floor(selected.row / 3) === Math.floor(r / 3) &&
-            Math.floor(selected.col / 3) === Math.floor(c / 3);
-          if (sameRow || sameCol || sameBox) btn.classList.add("peer");
         }
 
-        if (hlNum && val === hlNum) {
-          btn.classList.add("value-match");
-        }
-
-        if (hlNum && val !== hlNum && (hlRows.has(r) || hlCols.has(c))) {
-          btn.classList.add("value-line");
+        if (hlNum && blocked.has(`${r},${c}`)) {
+          btn.classList.add("blocked");
         }
 
         btn.addEventListener("click", () => selectCell(r, c));
