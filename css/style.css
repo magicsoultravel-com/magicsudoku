@@ -169,13 +169,15 @@ body {
 .menu-row {
   display: flex;
   justify-content: flex-start;
+  gap: 0.25rem;
 }
 
 .menu-row .zen-exit {
   display: none;
 }
 
-.app.zen .menu-row .menu-toggle {
+.app.zen .menu-row .menu-toggle,
+.app.zen .menu-row .zen-toggle {
   display: none;
 }
 
@@ -260,44 +262,42 @@ body {
 .board-wrap {
   position: relative;
   width: 100%;
+  transition: opacity 0.24s ease, transform 0.24s ease;
 }
 
-.appearance-panel {
-  flex-shrink: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  max-height: 9.5rem;
-  overflow: hidden;
-  box-shadow: var(--shadow);
+.board-wrap.is-clearing {
+  opacity: 0;
+  transform: scale(0.97);
+  pointer-events: none;
 }
 
-.appearance-panel[hidden] {
-  display: none;
+@keyframes cell-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.appearance-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.375rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+.cell.cell-reveal {
+  animation: cell-reveal 0.22s ease backwards;
 }
 
-.appearance-title {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
+.appearance-dialog {
+  max-width: min(20rem, calc(100vw - 2rem));
+  margin: 0.75rem auto auto;
 }
 
-.appearance-body {
-  padding: 0.25rem 0.5rem 0.5rem;
+.appearance-dialog::backdrop {
+  background: rgb(0 0 0 / 0.12);
+}
+
+.appearance-dialog .appearance-body {
+  max-height: min(14rem, 40dvh);
   overflow-y: auto;
-  flex: 1;
-  min-height: 0;
 }
 
 .settings-item {

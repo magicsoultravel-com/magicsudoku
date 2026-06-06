@@ -1,5 +1,6 @@
 (() => {
   const boardEl = document.getElementById("board");
+  const boardWrap = document.querySelector(".board-wrap");
   const numpadEl = document.getElementById("numpad");
   const statusEl = document.getElementById("status");
   const timerEl = document.getElementById("timer");
@@ -10,7 +11,7 @@
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
-  const appearancePanel = document.getElementById("appearance-panel");
+  const appearanceDialog = document.getElementById("appearance-dialog");
   const menuScrim = document.getElementById("menu-scrim");
   const confirmDialog = document.getElementById("confirm-dialog");
   const confirmMessage = document.getElementById("confirm-message");
@@ -45,6 +46,8 @@
   let pencilMode = false;
   let zenMode = false;
   let timerInterval = null;
+  let timerRunning = false;
+  let animateBoardReveal = false;
   let saveInterval = null;
   let seconds = 0;
   let gameWon = false;
@@ -194,9 +197,9 @@
   function closeSettings() {
     if (!settingsOpen) return;
     settingsOpen = false;
-    appearancePanel.hidden = true;
     btnSettings.classList.remove("active");
     Settings.closeAllMenus();
+    if (appearanceDialog.open) appearanceDialog.close();
   }
 
   function showConfirm(message, onConfirm) {
@@ -236,11 +239,19 @@
     return `${m}:${sec.toString().padStart(2, "0")}`;
   }
 
+  function resetTimer() {
+    stopTimer();
+    seconds = 0;
+    timerRunning = false;
+    timerEl.textContent = formatTime(0);
+  }
+
   function startTimer(fromSeconds = 0) {
     stopTimer();
     seconds = fromSeconds;
     timerEl.textContent = formatTime(seconds);
     if (gameWon) return;
+    timerRunning = true;
     timerInterval = setInterval(() => {
       seconds++;
       timerEl.textContent = formatTime(seconds);
@@ -252,6 +263,11 @@
       clearInterval(timerInterval);
       timerInterval = null;
     }
+  }
+
+  function ensureTimerRunning() {
+    if (gameWon || timerRunning) return;
+    startTimer(0);
   }
 
   function startAutoSave() {
@@ -321,7 +337,14 @@
       else setStatus("");
 
       renderBoard();
-      startTimer(seconds);
+      if (gameWon) {
+        timerEl.textContent = formatTime(seconds);
+        timerRunning = false;
+      } else if (seconds > 0) {
+        startTimer(seconds);
+      } else {
+        resetTimer();
+      }
       updateUndoRedo();
       return true;
     } catch {
@@ -449,6 +472,11 @@
           btn.classList.add("blocked");
         }
 
+        if (animateBoardReveal) {
+          btn.classList.add("cell-reveal");
+          btn.style.animationDelay = `${(r * 9 + c) * 6}ms`;
+        }
+
         btn.addEventListener("click", () => selectCell(r, c));
         btn.addEventListener("mouseenter", () => {
           if (!gameWon) btn.title = cellTitle(r, c);
@@ -457,6 +485,7 @@
         boardEl.appendChild(btn);
       }
     }
+    if (animateBoardReveal) animateBoardReveal = false;
     updateNumpad();
   }
 
@@ -495,6 +524,7 @@
     pushHistory();
     if (notes[row][col].has(num)) notes[row][col].delete(num);
     else notes[row][col].add(num);
+    ensureTimerRunning();
     clearErrors();
     renderBoard();
     saveGame();
@@ -571,6 +601,7 @@
     clearNotesAt(row, col);
     removeNoteFromPeers(row, col, num);
     activeNumber = num;
+    ensureTimerRunning();
     clearErrors();
     renderBoard();
     checkWin();
@@ -585,6 +616,7 @@
     pushHistory();
     puzzle[row][col] = 0;
     notes[row][col].clear();
+    ensureTimerRunning();
     clearErrors();
     renderBoard();
     setStatus("");
@@ -633,6 +665,7 @@
       }
     }
 
+    ensureTimerRunning();
     clearErrors();
     renderBoard();
     saveGame();
@@ -656,6 +689,7 @@
       }
     }
 
+    ensureTimerRunning();
     clearErrors();
     renderBoard();
     saveGame();
@@ -671,19 +705,22 @@
     history = [];
     future = [];
 
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        if (!given[r][c]) puzzle[r][c] = 0;
-      }
-    }
-
-    notes = emptyNotes();
     clearErrors();
     setStatus("");
-    renderBoard();
-    startTimer(0);
-    updateUndoRedo();
-    saveGame();
+    boardWrap.classList.add("is-clearing");
+    setTimeout(() => {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (!given[r][c]) puzzle[r][c] = 0;
+        }
+      }
+      notes = emptyNotes();
+      renderBoard();
+      boardWrap.classList.remove("is-clearing");
+      resetTimer();
+      updateUndoRedo();
+      saveGame();
+    }, 220);
   }
 
   function showErrors(errorSet) {
@@ -722,6 +759,7 @@
   function winGame() {
     gameWon = true;
     stopTimer();
+    timerRunning = false;
     setStatus("Solved!", "ok");
     updateUndoRedo();
     saveGame();
@@ -794,18 +832,18 @@
     setStatus("");
 
     const difficulty = difficultyEl.value;
-    setStatus("Generating…");
-    boardEl.style.opacity = "0.5";
+    boardWrap.classList.add("is-clearing");
 
     setTimeout(() => {
       applyGameResult(Sudoku.generate(difficulty));
-      boardEl.style.opacity = "";
-      setStatus("");
+      animateBoardReveal = true;
       renderBoard();
-      startTimer(0);
+      boardWrap.classList.remove("is-clearing");
+      resetTimer();
+      setStatus("");
       updateUndoRedo();
       saveGame();
-    }, 10);
+    }, 260);
   }
 
   function fillLessons(container, lessons) {
@@ -845,13 +883,13 @@
     }
     closeMenu();
     settingsOpen = true;
-    appearancePanel.hidden = false;
     btnSettings.classList.add("active");
     if (!settingsColors.childElementCount) {
       Settings.buildPanel(settingsColors);
     } else {
       Settings.syncPanel(settingsColors);
     }
+    appearanceDialog.showModal();
   }
 
   function handleKeydown(e) {
@@ -952,6 +990,13 @@
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);
   document.getElementById("settings-close").addEventListener("click", closeSettings);
+  appearanceDialog.addEventListener("click", (e) => {
+    if (e.target === appearanceDialog) closeSettings();
+  });
+  appearanceDialog.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    closeSettings();
+  });
   document.getElementById("lessons-close").addEventListener("click", () => lessonsDialog.close());
   document.getElementById("seeds-close").addEventListener("click", () => seedsDialog.close());
   lessonsDialog.addEventListener("click", (e) => {
@@ -964,7 +1009,8 @@
     if (
       menuOpen &&
       !e.target.closest("#nav-menu") &&
-      !e.target.closest("#btn-menu")
+      !e.target.closest("#btn-menu") &&
+      !e.target.closest("#btn-zen")
     ) {
       closeMenu();
     }
