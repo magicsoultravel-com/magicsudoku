@@ -3,8 +3,10 @@
   const CHASE_SPEED = 36;
   const WALK_MIN_MS = 7000;
   const WALK_MAX_MS = 14000;
-  const FALL_SPEED = 320;
-  const FLIP_START = 0.78;
+  const FALL_SPEED = 72;
+  const FALL_MIN_S = 1.6;
+  const FALL_MAX_S = 4.2;
+  const FLIP_START = 0.62;
 
   let boardWrap = null;
   let boardCat = null;
@@ -229,7 +231,7 @@
     const dist = target.dist;
     const duration = reducedMotion
       ? 0.01
-      : Math.max(0.45, Math.min(1.35, dist / FALL_SPEED));
+      : Math.max(FALL_MIN_S, Math.min(FALL_MAX_S, dist / FALL_SPEED));
 
     interaction = "fall";
     state = "fall";
@@ -262,24 +264,28 @@
 
     fallAnim.elapsed += dt;
     const t = Math.min(fallAnim.elapsed / fallAnim.duration, 1);
-    const ease = t * t * (3 - 2 * t);
-    const x = fallAnim.startX + (fallAnim.targetX - fallAnim.startX) * ease;
-    const y = fallAnim.startY + (fallAnim.targetY - fallAnim.startY) * ease;
 
-    let rotation;
+    const x = fallAnim.startX + (fallAnim.targetX - fallAnim.startX) * t;
+    const y = fallAnim.startY + (fallAnim.targetY - fallAnim.startY) * t;
+
+    let rotation = 180;
     let feetDown = false;
 
     if (reducedMotion) {
       rotation = fallAnim.targetHeading;
       feetDown = true;
     } else if (t < FLIP_START) {
-      rotation = 180 + (t / FLIP_START) * 360;
+      rotation = 180;
+    } else if (t >= 1) {
+      rotation = fallAnim.targetHeading;
+      feetDown = true;
     } else {
       const flipT = (t - FLIP_START) / (1 - FLIP_START);
       const flipEase = 1 - Math.pow(1 - flipT, 4);
-      const tumbleEnd = 540;
-      rotation = tumbleEnd + (fallAnim.targetHeading - tumbleEnd) * flipEase;
-      feetDown = flipT > 0.55;
+      const flipFrom = 180;
+      const flipTo = fallAnim.targetHeading + 540;
+      rotation = flipFrom + (flipTo - flipFrom) * flipEase;
+      feetDown = flipT > 0.82;
     }
 
     applyFreePosition(x, y, rotation, feetDown);
