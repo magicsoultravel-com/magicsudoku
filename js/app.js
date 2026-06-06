@@ -27,6 +27,7 @@
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
   const MAX_SEEDS = 10;
+  const HISTORY_LIMIT = 10;
   const THEMES = ["dark", "light", "slate", "ocean", "dusk"];
   const DEFAULT_THEME = "dark";
 
@@ -75,6 +76,33 @@
     };
   }
 
+  function serializeSnapshot(snap) {
+    return {
+      puzzle: snap.puzzle,
+      notes: snap.notes.map((row) => row.map((set) => [...set])),
+    };
+  }
+
+  function deserializeSnapshot(data) {
+    return {
+      puzzle: data.puzzle.map((row) => [...row]),
+      notes: data.notes.map((row) => row.map((arr) => new Set(arr))),
+    };
+  }
+
+  function serializeStack(stack) {
+    return stack.map(serializeSnapshot);
+  }
+
+  function deserializeStack(data) {
+    if (!Array.isArray(data)) return [];
+    return data.slice(-HISTORY_LIMIT).map(deserializeSnapshot);
+  }
+
+  function trimStack(stack) {
+    while (stack.length > HISTORY_LIMIT) stack.shift();
+  }
+
   function applySnapshot(snap) {
     puzzle = snap.puzzle.map((row) => [...row]);
     notes = cloneNotes(snap.notes);
@@ -82,7 +110,7 @@
 
   function pushHistory() {
     history.push(snapshot());
-    if (history.length > 120) history.shift();
+    trimStack(history);
     future = [];
     updateUndoRedo();
   }
@@ -95,6 +123,7 @@
   function undo() {
     if (!history.length || gameWon) return;
     future.push(snapshot());
+    trimStack(future);
     applySnapshot(history.pop());
     clearErrors();
     setStatus("");
@@ -106,6 +135,7 @@
   function redo() {
     if (!future.length || gameWon) return;
     history.push(snapshot());
+    trimStack(history);
     applySnapshot(future.pop());
     clearErrors();
     setStatus("");
@@ -229,6 +259,8 @@
       activeNumber,
       selected,
       difficultyPref: difficultyEl.value,
+      history: serializeStack(history),
+      future: serializeStack(future),
     };
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
@@ -258,8 +290,8 @@
       pencilMode = !!state.pencilMode;
       activeNumber = state.activeNumber ?? null;
       selected = state.selected ?? null;
-      history = [];
-      future = [];
+      history = deserializeStack(state.history);
+      future = deserializeStack(state.future);
 
       if (state.difficultyPref) difficultyEl.value = state.difficultyPref;
 
