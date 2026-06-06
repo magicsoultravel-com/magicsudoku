@@ -34,6 +34,11 @@
   let freeX = 0;
   let freeY = 0;
   let fallAnim = null;
+  let lookStep = 0;
+  let lookStepTimer = 0;
+
+  const LOOK_SEQUENCE = ["center", "left", "center", "right", "center"];
+  const LOOK_STEP_MS = 700;
 
   function rand(min, max) {
     return min + Math.random() * (max - min);
@@ -145,6 +150,10 @@
     applyBorderPosition(x, y, heading);
   }
 
+  function setLookDir(dir) {
+    boardCat.dataset.lookDir = dir;
+  }
+
   function setPose(pose) {
     boardCat.dataset.pose = pose;
     boardCat.classList.toggle("is-walking", pose === "walk" || pose === "chase");
@@ -155,6 +164,10 @@
     boardCat.classList.toggle("is-chasing", pose === "chase");
     boardCat.classList.toggle("is-dragging", pose === "drag");
     boardCat.classList.toggle("is-falling", pose === "fall");
+    if (pose !== "look") {
+      lookStep = 0;
+      setLookDir("center");
+    }
   }
 
   function hideMouse() {
@@ -183,11 +196,30 @@
 
   function pickIdleBehavior() {
     const r = Math.random();
-    if (r < 0.08) return "chase";
-    if (r < 0.16) return "meow";
-    if (r < 0.34) return "look";
-    if (r < 0.52) return "lie";
-    return "sit";
+    if (r < 0.1) return "chase";
+    if (r < 0.2) return "meow";
+    if (r < 0.42) return "look";
+    if (r < 0.58) return "lie";
+    if (r < 0.78) return "sit";
+    return "walk";
+  }
+
+  function beginLookRoutine() {
+    lookStep = 0;
+    setLookDir(LOOK_SEQUENCE[0]);
+    lookStepTimer = LOOK_STEP_MS;
+    idleTimer = LOOK_SEQUENCE.length * LOOK_STEP_MS + rand(400, 900);
+  }
+
+  function tickLook(dt) {
+    lookStepTimer -= dt * 1000;
+    if (lookStepTimer > 0) return;
+
+    lookStep += 1;
+    if (lookStep >= LOOK_SEQUENCE.length) return;
+
+    setLookDir(LOOK_SEQUENCE[lookStep]);
+    lookStepTimer = LOOK_STEP_MS;
   }
 
   function startWalking() {
@@ -199,6 +231,11 @@
   }
 
   function enterIdle(behavior) {
+    if (behavior === "walk") {
+      startWalking();
+      return;
+    }
+
     state = behavior;
     setPose(behavior);
 
@@ -210,9 +247,11 @@
       showMouseAt(mouseTarget);
       idleTimer = rand(3500, 5500);
     } else if (behavior === "sit") {
-      idleTimer = rand(3000, 5500);
+      idleTimer = rand(2500, 5000);
     } else if (behavior === "lie") {
-      idleTimer = rand(4500, 8000);
+      idleTimer = rand(4000, 7000);
+    } else if (behavior === "look") {
+      beginLookRoutine();
     } else {
       idleTimer = rand(2200, 4200);
     }
@@ -389,6 +428,7 @@
         }
       }
     } else {
+      if (state === "look") tickLook(dt);
       idleTimer -= dt * 1000;
       if (idleTimer <= 0) {
         if (state === "meow") hideSpeech();
@@ -435,6 +475,7 @@
     measure();
     progress = rand(0, perimeter);
     lastTime = 0;
+    setLookDir("center");
     startWalking();
     applyPosition(progress);
     rafId = requestAnimationFrame(tick);

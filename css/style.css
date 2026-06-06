@@ -491,7 +491,7 @@ body {
   position: absolute;
   z-index: 2;
   width: 52px;
-  height: 36px;
+  height: 34px;
   margin: 0;
   pointer-events: none;
   color: var(--board-cat-color, var(--text));
@@ -521,7 +521,7 @@ body {
 .board-cat .cat-sprite {
   display: block;
   width: 52px;
-  height: 36px;
+  height: 34px;
   overflow: visible;
 }
 
@@ -529,20 +529,34 @@ body {
   fill: currentColor;
 }
 
+.board-cat .cat-eye {
+  fill: var(--bg);
+}
+
+.board-cat .cat-mouth {
+  opacity: 0;
+}
+
 .board-cat .cat-view-front {
   display: none;
 }
 
 .board-cat.is-sitting .cat-view-side,
-.board-cat.is-looking .cat-view-side,
 .board-cat.is-meowing .cat-view-side {
   display: none;
 }
 
 .board-cat.is-sitting .cat-view-front,
-.board-cat.is-looking .cat-view-front,
 .board-cat.is-meowing .cat-view-front {
   display: block;
+}
+
+.board-cat.is-looking .cat-view-side {
+  display: block;
+}
+
+.board-cat.is-looking .cat-view-front {
+  display: none;
 }
 
 .board-cat.is-falling .cat-view-side {
@@ -564,16 +578,10 @@ body {
   display: none;
 }
 
-.board-cat.is-walking .cat-view-side,
-.board-cat.is-chasing .cat-view-side {
-  animation: cat-body-bob 0.9s ease-in-out infinite;
-  transform-origin: 40px 36px;
-}
-
 .board-cat.is-walking .cat-tail,
 .board-cat.is-chasing .cat-tail {
   animation: cat-tail-walk 0.9s ease-in-out infinite;
-  transform-origin: 12px 32px;
+  transform-origin: 12px 34px;
 }
 
 .board-cat.is-walking .cat-leg-b,
@@ -590,10 +598,6 @@ body {
   animation-direction: reverse;
 }
 
-.board-cat.is-chasing .cat-view-side {
-  animation-duration: 0.55s;
-}
-
 .board-cat.is-chasing .cat-tail {
   animation-duration: 0.55s;
 }
@@ -607,10 +611,30 @@ body {
   animation-direction: reverse;
 }
 
+.board-cat .cat-head {
+  transform-origin: 46px 29px;
+  transition: transform 0.32s ease;
+}
+
+.board-cat.is-looking[data-look-dir="left"] .cat-head {
+  transform: rotate(-20deg);
+}
+
+.board-cat.is-looking[data-look-dir="right"] .cat-head {
+  transform: rotate(16deg);
+}
+
 .board-cat.is-sitting .cat-sprite,
-.board-cat.is-looking .cat-sprite,
 .board-cat.is-meowing .cat-sprite {
   transform: rotate(calc(-1 * var(--cat-heading, 0deg)));
+}
+
+.board-cat.is-sitting .cat-view-front {
+  transform: translateY(1px);
+}
+
+.board-cat.is-meowing .cat-mouth {
+  opacity: 1;
 }
 
 .board-cat.is-lying .cat-view-side {
@@ -622,7 +646,12 @@ body {
 }
 
 .board-cat.is-lying .cat-sprite {
-  transform: scale(1.04, 0.68) translateY(4px);
+  transform: scale(1.06, 0.62) translateY(5px);
+}
+
+.board-cat.is-lying .cat-head {
+  transform: rotate(8deg);
+  transform-origin: 46px 29px;
 }
 
 .board-cat.is-lying .cat-legs {
@@ -695,23 +724,13 @@ body {
   display: none;
 }
 
-@keyframes cat-body-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1.5px);
-  }
-}
-
 @keyframes cat-tail-walk {
   0%,
   100% {
-    transform: rotate(-4deg);
+    transform: rotate(-3deg);
   }
   50% {
-    transform: rotate(5deg);
+    transform: rotate(4deg);
   }
 }
 
@@ -719,19 +738,23 @@ body {
   0%,
   49% {
     opacity: 1;
-    transform: translateY(0);
   }
   50%,
   100% {
     opacity: 0;
-    transform: translateY(1px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .board-cat .cat-leg-a,
-  .board-cat .cat-leg-b {
+  .board-cat .cat-leg-b,
+  .board-cat .cat-tail,
+  .board-cat .cat-view-front {
     animation: none !important;
+  }
+
+  .board-cat .cat-head {
+    transition: none;
   }
 }
 

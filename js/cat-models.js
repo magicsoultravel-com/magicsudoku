@@ -1,34 +1,41 @@
 window.CatModels = (() => {
   const SVG = `
-    <svg class="cat-sprite" viewBox="0 0 80 56" width="52" height="36" aria-hidden="true">
+    <svg class="cat-sprite" viewBox="0 0 80 50" width="52" height="34" aria-hidden="true">
       <g class="cat-view-side">
-        <path class="cf cat-tail" d="M16 31 C12 30 9 27 8 24 C7 21 8 18 10 16 C11 15 12 16 12 18 C11 20 10 23 11 26 C12 28 14 30 16 31 Z"/>
-        <path class="cf" d="M16 28 C18 24 22 22 28 21 C34 20 42 20 48 21 C54 22 58 25 59 28 C60 31 59 34 56 35 C52 36 46 36 40 36 C34 36 28 35 24 34 C20 33 16 31 16 28 Z"/>
-        <path class="cf" d="M48 19 C52 16 57 15 61 17 C65 19 67 23 66 27 C65 31 61 33 57 33 C53 33 50 30 49 26 C48 23 48 21 48 19 Z"/>
-        <path class="cf" d="M50 17 L52 12 L54 17 Z"/>
-        <path class="cf" d="M58 17 L60 11 L63 18 Z"/>
+        <path class="cf cat-tail" d="M14 34 L9 33 L6 28 L7 22 L10 18 L12 21 L13 27 L14 34 Z"/>
+        <path class="cf cat-body" d="M16 32 L20 26 L30 23 L44 23 L54 26 L58 30 L57 34 L52 36 L36 36 L22 35 L16 32 Z"/>
+        <g class="cat-head">
+          <path class="cf" d="M46 24 L50 19 L58 19 L62 24 L62 29 L58 33 L50 33 L46 29 Z"/>
+          <path class="cf" d="M49 19 L51 14 L53 19 Z"/>
+          <path class="cf" d="M57 19 L59 13 L62 20 Z"/>
+          <rect class="cat-eye" x="52" y="24" width="2" height="2" rx="0.3"/>
+          <rect class="cat-eye" x="56" y="24" width="2" height="2" rx="0.3"/>
+        </g>
         <g class="cat-legs">
           <g class="cat-leg cat-leg-a">
-            <path class="cf" d="M22 35 L24 47 L22 49 L26 49 L28 47 L26 35 Z"/>
-            <path class="cf" d="M28 35 L27 46 L25 48 L29 48 L31 46 L30 35 Z"/>
-            <path class="cf" d="M40 35 L38 46 L36 48 L40 48 L42 46 L42 35 Z"/>
-            <path class="cf" d="M48 35 L50 47 L48 49 L52 49 L54 47 L50 35 Z"/>
+            <path class="cf" d="M22 35 L23 47 L20 50 L26 50 L28 47 L27 35 Z"/>
+            <path class="cf" d="M28 35 L28 46 L25 49 L31 49 L33 46 L32 35 Z"/>
+            <path class="cf" d="M40 35 L39 46 L36 49 L42 49 L44 46 L43 35 Z"/>
+            <path class="cf" d="M48 35 L49 47 L46 50 L52 50 L54 47 L50 35 Z"/>
           </g>
           <g class="cat-leg cat-leg-b">
-            <path class="cf" d="M22 35 L20 46 L18 48 L22 48 L24 46 L24 35 Z"/>
-            <path class="cf" d="M28 35 L30 47 L28 49 L32 49 L34 47 L32 35 Z"/>
-            <path class="cf" d="M40 35 L42 47 L40 49 L44 49 L46 47 L44 35 Z"/>
-            <path class="cf" d="M48 35 L46 46 L44 48 L48 48 L50 46 L48 35 Z"/>
+            <path class="cf" d="M22 35 L21 46 L18 49 L24 49 L26 46 L25 35 Z"/>
+            <path class="cf" d="M28 35 L29 47 L26 50 L32 50 L34 47 L33 35 Z"/>
+            <path class="cf" d="M40 35 L41 47 L38 50 L44 50 L46 47 L45 35 Z"/>
+            <path class="cf" d="M48 35 L47 46 L44 49 L50 49 L52 46 L51 35 Z"/>
           </g>
         </g>
       </g>
       <g class="cat-view-front">
-        <path class="cf" d="M24 34 C22 32 22 28 24 24 C26 20 30 18 34 18 C38 18 42 20 44 22 C46 24 50 24 52 22 C54 20 58 18 62 18 C66 18 70 20 72 24 C74 28 74 32 72 34 C70 36 66 36 64 34 C62 32 58 32 56 34 C54 36 50 36 48 34 C46 32 42 32 40 34 C38 36 34 36 32 34 C30 32 26 32 24 34 Z"/>
-        <path class="cf" d="M30 14 L32 8 L36 14 Z"/>
-        <path class="cf" d="M48 14 L50 8 L54 14 Z"/>
-        <path class="cf cat-tail" d="M10 30 C8 28 7 25 8 22 C9 19 10 18 11 19 C12 20 11 22 11 24 C11 26 11 28 10 30 Z"/>
-        <path class="cf" d="M28 34 L27 48 L25 50 L29 50 L31 48 L30 34 Z"/>
-        <path class="cf" d="M50 34 L49 48 L47 50 L51 50 L53 48 L52 34 Z"/>
+        <path class="cf cat-tail" d="M10 32 L8 28 L9 23 L11 21 L12 26 L10 32 Z"/>
+        <path class="cf" d="M22 36 L24 28 L30 24 L38 24 L44 28 L46 36 L42 38 L30 38 L22 36 Z"/>
+        <path class="cf" d="M28 22 L30 16 L34 22 Z"/>
+        <path class="cf" d="M46 22 L48 16 L52 22 Z"/>
+        <rect class="cat-eye" x="31" y="26" width="2" height="2" rx="0.3"/>
+        <rect class="cat-eye" x="37" y="26" width="2" height="2" rx="0.3"/>
+        <path class="cf cat-mouth" d="M32 31 L34 33 L38 33 L40 31 Z"/>
+        <path class="cf" d="M26 36 L25 48 L22 50 L28 50 L30 48 L28 36 Z"/>
+        <path class="cf" d="M50 36 L49 48 L46 50 L52 50 L54 48 L52 36 Z"/>
       </g>
     </svg>`;
 
