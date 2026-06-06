@@ -14,6 +14,7 @@
   const settingsColors = document.getElementById("settings-colors");
   const btnSettings = document.getElementById("btn-settings");
   const btnMenu = document.getElementById("btn-menu");
+  const btnZenExit = document.getElementById("btn-zen-exit");
   const navMenu = document.getElementById("nav-menu");
   const seedList = document.getElementById("seed-list");
   const currentSeedEl = document.getElementById("current-seed");
@@ -162,6 +163,7 @@
     zenMode = enabled;
     appEl.classList.toggle("zen", zenMode);
     btnZen.classList.toggle("active", zenMode);
+    btnZenExit.classList.toggle("active", zenMode);
     btnZen.title = zenMode ? "Exit zen mode" : "Zen mode — focus on the puzzle";
     localStorage.setItem("sudoku-zen", zenMode ? "1" : "0");
     if (zenMode) {
@@ -790,9 +792,12 @@
   });
   btnMenu.addEventListener("click", toggleMenu);
   btnZen.addEventListener("click", () => {
-    setZen(!zenMode);
+    setZen(true);
     saveGame();
-    if (!zenMode) closeMenu();
+  });
+  btnZenExit.addEventListener("click", () => {
+    setZen(false);
+    saveGame();
   });
   document.getElementById("btn-new").addEventListener("click", newGame);
   document.getElementById("btn-check").addEventListener("click", checkSolution);

@@ -168,6 +168,18 @@ body {
   justify-content: flex-start;
 }
 
+.menu-row .zen-exit {
+  display: none;
+}
+
+.app.zen .menu-row .menu-toggle {
+  display: none;
+}
+
+.app.zen .menu-row .zen-exit {
+  display: flex;
+}
+
 .nav-menu {
   display: flex;
   flex-wrap: wrap;
