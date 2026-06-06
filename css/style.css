@@ -491,7 +491,7 @@ body {
   position: absolute;
   z-index: 2;
   width: 52px;
-  height: 34px;
+  height: 28px;
   margin: 0;
   pointer-events: none;
   color: var(--board-cat-color, var(--text));
@@ -521,8 +521,13 @@ body {
 .board-cat .cat-sprite {
   display: block;
   width: 52px;
-  height: 34px;
+  height: 28px;
   overflow: visible;
+  transform-origin: 50% 100%;
+}
+
+.board-cat .cat-view-lie {
+  display: none;
 }
 
 .board-cat .cat-sprite .cf {
@@ -581,7 +586,7 @@ body {
 .board-cat.is-walking .cat-tail,
 .board-cat.is-chasing .cat-tail {
   animation: cat-tail-walk 0.9s ease-in-out infinite;
-  transform-origin: 12px 34px;
+  transform-origin: 14px 28px;
 }
 
 .board-cat.is-walking .cat-leg-b,
@@ -612,7 +617,7 @@ body {
 }
 
 .board-cat .cat-head {
-  transform-origin: 46px 29px;
+  transform-origin: 47px 30px;
   transition: transform 0.32s ease;
 }
 
@@ -629,33 +634,21 @@ body {
   transform: rotate(calc(-1 * var(--cat-heading, 0deg)));
 }
 
-.board-cat.is-sitting .cat-view-front {
-  transform: translateY(1px);
-}
-
 .board-cat.is-meowing .cat-mouth {
   opacity: 1;
 }
 
-.board-cat.is-lying .cat-view-side {
-  display: block;
-}
-
+.board-cat.is-lying .cat-view-side,
 .board-cat.is-lying .cat-view-front {
   display: none;
 }
 
-.board-cat.is-lying .cat-sprite {
-  transform: scale(1.06, 0.62) translateY(5px);
-}
-
-.board-cat.is-lying .cat-head {
-  transform: rotate(8deg);
-  transform-origin: 46px 29px;
+.board-cat.is-lying .cat-view-lie {
+  display: block;
 }
 
 .board-cat.is-lying .cat-legs {
-  opacity: 0;
+  display: none;
 }
 
 .cat-speech {
