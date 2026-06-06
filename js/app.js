@@ -128,6 +128,7 @@
     zenMode = enabled;
     appEl.classList.toggle("zen", zenMode);
     btnZen.classList.toggle("active", zenMode);
+    btnZen.title = zenMode ? "Exit zen mode" : "Zen mode — focus on the puzzle";
     localStorage.setItem("sudoku-zen", zenMode ? "1" : "0");
   }
 

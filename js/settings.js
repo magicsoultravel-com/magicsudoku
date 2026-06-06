@@ -1,22 +1,39 @@
 const Settings = (() => {
   const STORAGE_KEY = "sudoku-colors";
+  const CUSTOM = "__custom__";
 
   const PRESETS = [
-    "#ffffff", "#000000", "#ef4444", "#f97316",
-    "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
-    "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899",
-    "#78716c", "#64748b", "#1e293b", "#94a3b8",
+    { value: "#ffffff", label: "White" },
+    { value: "#000000", label: "Black" },
+    { value: "#ef4444", label: "Red" },
+    { value: "#f97316", label: "Orange" },
+    { value: "#eab308", label: "Yellow" },
+    { value: "#22c55e", label: "Green" },
+    { value: "#14b8a6", label: "Teal" },
+    { value: "#06b6d4", label: "Cyan" },
+    { value: "#3b82f6", label: "Blue" },
+    { value: "#6366f1", label: "Indigo" },
+    { value: "#8b5cf6", label: "Violet" },
+    { value: "#ec4899", label: "Pink" },
+    { value: "#78716c", label: "Stone" },
+    { value: "#64748b", label: "Slate" },
+    { value: "#1e293b", label: "Navy" },
+    { value: "#94a3b8", label: "Silver" },
   ];
 
   const FIELDS = [
-    { id: "borderStrong", label: "External borders", var: "--board-border-strong" },
-    { id: "border", label: "Internal borders", var: "--board-border" },
-    { id: "fontColor", label: "Font color", var: "--board-font" },
-    { id: "highlightValue", label: "Number highlight", var: "--board-highlight-value" },
-    { id: "highlightPeer", label: "Row & column area", var: "--board-highlight-peer" },
+    { id: "borderStrong", label: "Outer borders", var: "--board-border-strong" },
+    { id: "border", label: "Grid lines", var: "--board-border" },
+    { id: "fontColor", label: "Numbers", var: "--board-font" },
+    { id: "highlightValue", label: "Match tint", var: "--board-highlight-value" },
+    { id: "highlightPeer", label: "Row/col tint", var: "--board-highlight-peer" },
   ];
 
   let colors = {};
+
+  function isPreset(value) {
+    return PRESETS.some((p) => p.value === value);
+  }
 
   function load() {
     try {
@@ -62,62 +79,85 @@ const Settings = (() => {
     apply();
   }
 
+  function selectValueForField(id) {
+    const value = getColor(id);
+    if (!value) return "";
+    if (isPreset(value)) return value;
+    return CUSTOM;
+  }
+
   function buildDialog(container) {
     container.innerHTML = "";
+
     FIELDS.forEach((field) => {
       const row = document.createElement("div");
-      row.className = "color-field";
+      row.className = "setting-row";
       row.dataset.field = field.id;
 
       const label = document.createElement("label");
-      label.className = "color-field-label";
+      label.className = "setting-label";
       label.textContent = field.label;
+      label.htmlFor = `setting-${field.id}`;
 
-      const presets = document.createElement("div");
-      presets.className = "color-presets";
-      presets.setAttribute("role", "group");
-      presets.setAttribute("aria-label", field.label);
+      const select = document.createElement("select");
+      select.id = `setting-${field.id}`;
+      select.className = "setting-select";
 
-      PRESETS.forEach((hex) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "color-swatch";
-        btn.style.backgroundColor = hex;
-        btn.dataset.color = hex;
-        btn.title = hex;
-        btn.addEventListener("click", () => {
-          setColor(field.id, hex);
-          syncDialog(container);
-        });
-        presets.appendChild(btn);
+      const defaultOpt = document.createElement("option");
+      defaultOpt.value = "";
+      defaultOpt.textContent = "Theme default";
+      select.appendChild(defaultOpt);
+
+      PRESETS.forEach((preset) => {
+        const opt = document.createElement("option");
+        opt.value = preset.value;
+        opt.textContent = preset.label;
+        select.appendChild(opt);
       });
 
-      const pickerWrap = document.createElement("div");
-      pickerWrap.className = "color-picker-wrap";
+      const customOpt = document.createElement("option");
+      customOpt.value = CUSTOM;
+      customOpt.textContent = "Custom…";
+      select.appendChild(customOpt);
 
       const picker = document.createElement("input");
       picker.type = "color";
-      picker.className = "color-picker";
-      picker.value = getColor(field.id) || "#3b82f6";
+      picker.className = "setting-color-picker";
       picker.title = "Custom color";
+      picker.hidden = true;
+
+      select.addEventListener("change", () => {
+        if (select.value === "") {
+          picker.hidden = true;
+          setColor(field.id, "");
+        } else if (select.value === CUSTOM) {
+          picker.hidden = false;
+          if (!getColor(field.id) || isPreset(getColor(field.id))) {
+            picker.value = "#3b82f6";
+            setColor(field.id, picker.value);
+          } else {
+            picker.value = getColor(field.id);
+          }
+        } else {
+          picker.hidden = true;
+          setColor(field.id, select.value);
+        }
+        syncDialog(container);
+      });
+
       picker.addEventListener("input", () => {
         setColor(field.id, picker.value);
         syncDialog(container);
       });
 
-      const current = document.createElement("span");
-      current.className = "color-current";
-      current.dataset.field = field.id;
-
-      pickerWrap.append(picker, current);
-      row.append(label, presets, pickerWrap);
+      row.append(label, select, picker);
       container.appendChild(row);
     });
 
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
     resetBtn.className = "btn btn-reset";
-    resetBtn.textContent = "Reset to default (Dark)";
+    resetBtn.textContent = "Reset all (Dark theme)";
     resetBtn.addEventListener("click", () => {
       document.dispatchEvent(new CustomEvent("sudoku:reset-appearance"));
     });
@@ -128,19 +168,17 @@ const Settings = (() => {
 
   function syncDialog(container) {
     FIELDS.forEach((field) => {
-      const value = getColor(field.id);
       const row = container.querySelector(`[data-field="${field.id}"]`);
       if (!row) return;
 
-      row.querySelectorAll(".color-swatch").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.color === value);
-      });
+      const select = row.querySelector(".setting-select");
+      const picker = row.querySelector(".setting-color-picker");
+      const value = getColor(field.id);
+      const selected = selectValueForField(field.id);
 
-      const picker = row.querySelector(".color-picker");
-      if (picker && value) picker.value = value;
-
-      const current = row.querySelector(".color-current");
-      if (current) current.textContent = value || "Theme default";
+      select.value = selected;
+      picker.hidden = selected !== CUSTOM;
+      if (selected === CUSTOM && value) picker.value = value;
     });
   }
 
