@@ -10,9 +10,11 @@
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
-  const settingsPanel = document.getElementById("settings-panel");
+  const appearanceOverlay = document.getElementById("appearance-overlay");
   const settingsColors = document.getElementById("settings-colors");
   const btnSettings = document.getElementById("btn-settings");
+  const btnMenu = document.getElementById("btn-menu");
+  const navMenu = document.getElementById("nav-menu");
   const seedList = document.getElementById("seed-list");
   const currentSeedEl = document.getElementById("current-seed");
 
@@ -45,6 +47,7 @@
   let currentDifficulty = null;
   let seedHistory = [];
   let settingsOpen = false;
+  let menuOpen = false;
 
   function emptyNotes() {
     return Array.from({ length: 9 }, () =>
@@ -127,11 +130,30 @@
     saveGame();
   }
 
+  function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    navMenu.hidden = true;
+    btnMenu.classList.remove("active");
+    btnMenu.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleMenu() {
+    if (menuOpen) {
+      closeMenu();
+      return;
+    }
+    closeSettings();
+    menuOpen = true;
+    navMenu.hidden = false;
+    btnMenu.classList.add("active");
+    btnMenu.setAttribute("aria-expanded", "true");
+  }
+
   function closeSettings() {
     if (!settingsOpen) return;
     settingsOpen = false;
-    settingsPanel.hidden = true;
-    appEl.classList.remove("settings-open");
+    appearanceOverlay.hidden = true;
     btnSettings.classList.remove("active");
     Settings.closeAllMenus();
   }
@@ -142,7 +164,10 @@
     btnZen.classList.toggle("active", zenMode);
     btnZen.title = zenMode ? "Exit zen mode" : "Zen mode — focus on the puzzle";
     localStorage.setItem("sudoku-zen", zenMode ? "1" : "0");
-    if (zenMode) closeSettings();
+    if (zenMode) {
+      closeSettings();
+      closeMenu();
+    }
   }
 
   function initPreferences() {
@@ -454,6 +479,10 @@
     }
 
     selected = { row, col };
+    if (!pencilMode) {
+      const val = puzzle[row][col];
+      activeNumber = val || null;
+    }
     clearErrors();
     renderBoard();
     saveGame();
@@ -614,6 +643,7 @@
   }
 
   function openSeeds() {
+    closeMenu();
     renderSeeds();
     seedsDialog.showModal();
   }
@@ -670,6 +700,7 @@
   }
 
   function openLessons() {
+    closeMenu();
     if (!lessonsBasics.childElementCount) {
       fillLessons(lessonsBasics, LessonsBasics);
       fillLessons(lessonsAdvanced, LessonsAdvanced);
@@ -683,9 +714,9 @@
       closeSettings();
       return;
     }
+    closeMenu();
     settingsOpen = true;
-    settingsPanel.hidden = false;
-    appEl.classList.add("settings-open");
+    appearanceOverlay.hidden = false;
     btnSettings.classList.add("active");
     if (!settingsColors.childElementCount) {
       Settings.buildPanel(settingsColors);
@@ -757,6 +788,7 @@
     setTheme(themeSelect.value);
     saveGame();
   });
+  btnMenu.addEventListener("click", toggleMenu);
   btnZen.addEventListener("click", () => {
     setZen(!zenMode);
     saveGame();
@@ -768,6 +800,7 @@
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);
+  document.getElementById("settings-close").addEventListener("click", closeSettings);
   document.getElementById("lessons-close").addEventListener("click", () => lessonsDialog.close());
   document.getElementById("seeds-close").addEventListener("click", () => seedsDialog.close());
   lessonsDialog.addEventListener("click", (e) => {
@@ -775,6 +808,9 @@
   });
   seedsDialog.addEventListener("click", (e) => {
     if (e.target === seedsDialog) seedsDialog.close();
+  });
+  document.addEventListener("click", (e) => {
+    if (menuOpen && !e.target.closest(".header")) closeMenu();
   });
   document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
