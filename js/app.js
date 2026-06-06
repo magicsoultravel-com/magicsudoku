@@ -1273,8 +1273,14 @@
     setZen(false);
     saveGame();
   });
-  document.getElementById("btn-new").addEventListener("click", newGame);
-  document.getElementById("btn-restart").addEventListener("click", restartGame);
+  document.getElementById("btn-new").addEventListener("click", () => {
+    if (window.Games && !window.Games.isSudoku()) return;
+    newGame();
+  });
+  document.getElementById("btn-restart").addEventListener("click", () => {
+    if (window.Games && !window.Games.isSudoku()) return;
+    restartGame();
+  });
   document.getElementById("btn-check").addEventListener("click", checkSolution);
   document.getElementById("btn-erase").addEventListener("click", eraseCell);
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
@@ -1382,4 +1388,6 @@
   }
 
   boot();
+
+  window.SudokuApp = { saveGame };
 })();
