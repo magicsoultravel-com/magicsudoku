@@ -5,8 +5,11 @@
   const statusEl = document.getElementById("status");
   const timerEl = document.getElementById("timer");
   const difficultyEl = document.getElementById("difficulty");
-  const themeSelect = document.getElementById("theme-select");
-  const appEl = document.querySelector(".app");
+  const themePickerBtn = document.getElementById("theme-picker-btn");
+  const themePickerMenu = document.getElementById("theme-picker-menu");
+  const themeSwatch = document.getElementById("theme-swatch");
+  const versionEl = document.getElementById("app-version");
+  const colorPickerDialog = document.getElementById("color-picker-dialog");
   const quoteSplash = document.getElementById("quote-splash");
   const quoteTextEl = document.getElementById("quote-text");
   const quoteAuthorEl = document.getElementById("quote-author");
@@ -18,6 +21,7 @@
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
   const appearanceDialog = document.getElementById("appearance-dialog");
+  const appEl = document.querySelector(".app");
   const menuScrim = document.getElementById("menu-scrim");
   const confirmDialog = document.getElementById("confirm-dialog");
   const confirmMessage = document.getElementById("confirm-message");
@@ -45,8 +49,14 @@
   const statsCompletedEl = document.getElementById("stats-completed");
   const MAX_SEEDS = 10;
   const HISTORY_LIMIT = 10;
-  const THEMES = ["dark", "light", "slate", "ocean", "dusk"];
-  const DEFAULT_THEME = "dark";
+  const THEMES = [
+    { id: "slate", label: "Slate", swatch: "#1a2332" },
+    { id: "light", label: "Light", swatch: "#f4f4f5" },
+    { id: "ocean", label: "Ocean", swatch: "#e8f5f2" },
+    { id: "dusk", label: "Dusk", swatch: "#1c1824" },
+    { id: "oled", label: "OLED", swatch: "#09090b" },
+  ];
+  const DEFAULT_THEME = "slate";
 
   let puzzle = [];
   let solution = [];
@@ -56,7 +66,7 @@
   let activeNumber = null;
   let pencilMode = false;
   let zenMode = false;
-  let catCompanion = false;
+  let catMode = 0;
   let timerInterval = null;
   let timerRunning = false;
   let animateBoardReveal = false;
@@ -218,17 +228,65 @@
     saveGame();
   }
 
-  function setTheme(theme) {
-    if (!THEMES.includes(theme)) theme = DEFAULT_THEME;
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("sudoku-theme", theme);
-    if (themeSelect) themeSelect.value = theme;
+  function themeById(id) {
+    return THEMES.find((t) => t.id === id) || THEMES[0];
+  }
+
+  function setTheme(themeId) {
+    const theme = themeById(themeId);
+    document.documentElement.setAttribute("data-theme", theme.id);
+    localStorage.setItem("sudoku-theme", theme.id);
+    updateThemePickerUI(theme.id);
     Settings.onThemeChange();
+    saveGame();
+  }
+
+  function updateThemePickerUI(activeId) {
+    if (themeSwatch) {
+      themeSwatch.style.backgroundColor = themeById(activeId).swatch;
+    }
+    if (!themePickerMenu) return;
+    themePickerMenu.querySelectorAll(".theme-option").forEach((btn) => {
+      const selected = btn.dataset.theme === activeId;
+      btn.classList.toggle("active", selected);
+      btn.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+  }
+
+  function buildThemePicker() {
+    if (!themePickerMenu) return;
+    themePickerMenu.innerHTML = "";
+    THEMES.forEach((theme) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "theme-option";
+      btn.dataset.theme = theme.id;
+      btn.setAttribute("role", "option");
+      btn.title = theme.label;
+      btn.innerHTML = `<span class="theme-option-swatch" style="background:${theme.swatch}"></span><span class="theme-option-label">${theme.label}</span>`;
+      btn.addEventListener("click", () => {
+        setTheme(theme.id);
+        closeThemePicker();
+      });
+      themePickerMenu.appendChild(btn);
+    });
+  }
+
+  function closeThemePicker() {
+    if (!themePickerMenu) return;
+    themePickerMenu.hidden = true;
+    themePickerBtn?.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleThemePicker() {
+    if (!themePickerMenu) return;
+    const willOpen = themePickerMenu.hidden;
+    themePickerMenu.hidden = !willOpen;
+    themePickerBtn?.setAttribute("aria-expanded", willOpen ? "true" : "false");
   }
 
   function resetAppearance() {
     Settings.reset();
-    setTheme(DEFAULT_THEME);
     if (settingsColors.childElementCount) {
       Settings.syncPanel(settingsColors);
     }
@@ -243,6 +301,7 @@
     menuScrim.setAttribute("aria-hidden", "true");
     btnMenu.classList.remove("active");
     btnMenu.setAttribute("aria-expanded", "false");
+    closeThemePicker();
   }
 
   function toggleMenu() {
@@ -291,22 +350,36 @@
     }
   }
 
-  function setCatCompanion(enabled) {
-    catCompanion = enabled;
-    boardCat.hidden = !enabled;
-    boardCat.setAttribute("aria-hidden", enabled ? "false" : "true");
-    btnCat.classList.toggle("active", enabled);
-    btnCat.title = enabled ? "Hide companion cat" : "Companion cat";
-    localStorage.setItem("sudoku-cat", enabled ? "1" : "0");
-    if (enabled) CatCompanion.start();
-    else CatCompanion.stop();
+  function setCatMode(mode) {
+    catMode = mode;
+    const active = mode > 0;
+    boardCat.hidden = !active;
+    boardCat.setAttribute("aria-hidden", active ? "false" : "true");
+    btnCat.classList.toggle("active", active);
+    btnCat.dataset.catMode = String(mode);
+    const label = CatModels.label(mode);
+    btnCat.title = active ? `Companion cat · ${label} (click to change)` : "Companion cat (click to enable)";
+    btnCat.setAttribute("aria-label", btnCat.title);
+    localStorage.setItem("sudoku-cat", String(mode));
+    if (active) {
+      CatCompanion.setModel(mode);
+      CatCompanion.start();
+    } else {
+      CatCompanion.stop();
+    }
+  }
+
+  function cycleCatMode() {
+    setCatMode((catMode + 1) % 4);
   }
 
   function initPreferences() {
-    const savedTheme = localStorage.getItem("sudoku-theme");
-    setTheme(THEMES.includes(savedTheme) ? savedTheme : DEFAULT_THEME);
+    let savedTheme = localStorage.getItem("sudoku-theme");
+    if (savedTheme === "dark") savedTheme = "oled";
+    setTheme(THEMES.some((t) => t.id === savedTheme) ? savedTheme : DEFAULT_THEME);
     setZen(localStorage.getItem("sudoku-zen") === "1");
-    setCatCompanion(localStorage.getItem("sudoku-cat") === "1");
+    const savedCat = parseInt(localStorage.getItem("sudoku-cat") || "0", 10);
+    setCatMode(Number.isFinite(savedCat) && savedCat >= 0 && savedCat <= 3 ? savedCat : 0);
     Settings.load();
   }
 
@@ -1074,9 +1147,9 @@
     selectCell(nr, nc);
   }
 
-  themeSelect.addEventListener("change", () => {
-    setTheme(themeSelect.value);
-    saveGame();
+  themePickerBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleThemePicker();
   });
   btnMenu.addEventListener("click", toggleMenu);
   btnZen.addEventListener("click", () => {
@@ -1109,7 +1182,7 @@
     closeConfirm();
   });
   menuScrim.addEventListener("click", closeMenu);
-  btnCat.addEventListener("click", () => setCatCompanion(!catCompanion));
+  btnCat.addEventListener("click", () => cycleCatMode());
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);
@@ -1138,6 +1211,13 @@
     ) {
       closeMenu();
     }
+    if (
+      themePickerMenu &&
+      !themePickerMenu.hidden &&
+      !e.target.closest(".theme-picker")
+    ) {
+      closeThemePicker();
+    }
   });
   document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
@@ -1151,14 +1231,22 @@
   });
   window.addEventListener("beforeunload", saveGame);
 
+  CatModels.mount(boardCat);
   CatCompanion.init(boardWrap, boardCat, document.getElementById("board-cat-mouse"));
 
-  const versionEl = document.getElementById("app-version");
-  if (versionEl && window.APP_VERSION) {
-    versionEl.textContent = window.APP_VERSION;
-  }
+  Settings.initPickerDialog(
+    colorPickerDialog,
+    document.getElementById("color-picker-body"),
+    document.getElementById("color-picker-title"),
+    document.getElementById("color-picker-close")
+  );
+
+  buildThemePicker();
 
   async function boot() {
+    if (versionEl && window.APP_VERSION) {
+      versionEl.textContent = window.APP_VERSION;
+    }
     initPreferences();
     loadStats();
     loadSeedHistory();

@@ -29,7 +29,7 @@
   --note: #52525b;
 }
 
-[data-theme="dark"] {
+[data-theme="oled"] {
   --bg: #09090b;
   --surface: #18181b;
   --text: #fafafa;
@@ -349,15 +349,127 @@ body {
   gap: 0.25rem;
 }
 
+.btn-companion-cat[data-cat-mode="1"]::after,
+.btn-companion-cat[data-cat-mode="2"]::after,
+.btn-companion-cat[data-cat-mode="3"]::after {
+  content: attr(data-cat-mode);
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+#btn-companion-cat {
+  position: relative;
+}
+
 .menu-selects {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
 }
 
 .menu-selects .select {
-  width: 100%;
+  flex: 1 1 4.5rem;
+  width: auto;
   min-width: 0;
+}
+
+.menu-version {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 0 0.125rem;
+}
+
+.theme-picker {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.theme-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  min-height: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.theme-picker-btn:hover {
+  background: var(--hover);
+}
+
+.theme-swatch {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.theme-picker-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  min-width: 7.5rem;
+  padding: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.theme-picker-menu[hidden] {
+  display: none;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.25rem 0.375rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.theme-option:hover {
+  background: var(--hover);
+}
+
+.theme-option.active {
+  background: var(--accent-soft);
+  outline: 1px solid var(--accent);
+}
+
+.theme-option-swatch {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .timer {
@@ -396,11 +508,11 @@ body {
 .board-cat {
   position: absolute;
   z-index: 2;
-  width: 40px;
-  height: 28px;
+  width: 48px;
+  height: 33px;
   margin: 0;
   pointer-events: none;
-  color: var(--text);
+  color: var(--board-cat-color, var(--text));
   transform-origin: 50% 100%;
   will-change: left, top, transform;
   touch-action: none;
@@ -426,10 +538,9 @@ body {
 
 .board-cat .cat-sprite {
   display: block;
-  width: 40px;
-  height: 28px;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  width: 48px;
+  height: 33px;
+  image-rendering: auto;
 }
 
 .board-cat .cat-sprite .cf {
@@ -438,6 +549,12 @@ body {
 
 .board-cat .cat-sprite .cl {
   fill: var(--surface);
+  opacity: 0.92;
+}
+
+.board-cat .cat-sprite .cs {
+  fill: currentColor;
+  opacity: 0.35;
 }
 
 .board-cat .cat-sprite .ce {
@@ -635,8 +752,24 @@ body {
 }
 
 .appearance-dialog .appearance-body {
-  max-height: min(14rem, 40dvh);
-  overflow-y: auto;
+  overflow: visible;
+}
+
+.color-picker-dialog {
+  max-width: min(16rem, calc(100vw - 2rem));
+}
+
+.color-picker-dialog::backdrop {
+  background: rgb(0 0 0 / 0.2);
+}
+
+.color-picker-body {
+  overflow: visible;
+}
+
+.color-picker-body .color-menu-grid {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 0.5rem;
 }
 
 .settings-item {
@@ -677,16 +810,7 @@ body {
 }
 
 .color-menu {
-  position: absolute;
-  top: calc(100% + 2px);
-  right: 0;
-  z-index: 20;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.375rem;
-  box-shadow: var(--shadow);
-  min-width: 8.5rem;
+  display: none;
 }
 
 .color-menu-grid {
@@ -744,10 +868,12 @@ body {
   background: transparent;
 }
 
+.appearance-body .settings-item + .settings-item {
+  margin-top: 0.5rem;
+}
+
 .appearance-body .btn-reset {
-  margin-top: 0.25rem;
-  font-size: 0.6875rem;
-  padding: 0.375rem;
+  margin-top: 0.75rem;
 }
 
 .board {
@@ -955,25 +1081,10 @@ body {
   flex-shrink: 0;
 }
 
-.select-theme {
-  max-width: 4.25rem;
-}
-
 .footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
   font-size: 0.75rem;
   color: var(--text-muted);
   min-height: 1.25rem;
-}
-
-.app-version {
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  opacity: 0.85;
 }
 
 .status.ok {

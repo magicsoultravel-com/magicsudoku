@@ -465,6 +465,12 @@
     setPose("walk");
   }
 
+  function setModel(modelId) {
+    if (window.CatModels) {
+      CatModels.show(boardCat, modelId);
+    }
+  }
+
   function init(wrap, catEl, mouseNode) {
     boardWrap = wrap;
     boardCat = catEl;
@@ -473,5 +479,5 @@
     bindPointer();
   }
 
-  window.CatCompanion = { init, start, stop };
+  window.CatCompanion = { init, start, stop, setModel };
 })();
