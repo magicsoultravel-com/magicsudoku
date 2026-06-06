@@ -792,6 +792,7 @@
   btnZen.addEventListener("click", () => {
     setZen(!zenMode);
     saveGame();
+    if (!zenMode) closeMenu();
   });
   document.getElementById("btn-new").addEventListener("click", newGame);
   document.getElementById("btn-check").addEventListener("click", checkSolution);

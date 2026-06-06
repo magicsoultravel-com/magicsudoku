@@ -155,13 +155,6 @@ body {
   gap: 0.5rem;
 }
 
-.header-bar {
-  display: grid;
-  grid-template-columns: 2rem 1fr 2rem;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .title {
   margin: 0;
   font-size: 1.125rem;
@@ -170,16 +163,18 @@ body {
   text-align: center;
 }
 
+.menu-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .nav-menu {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.25rem;
-  padding: 0.375rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
+  padding: 0.375rem 0;
 }
 
 .nav-menu[hidden] {
@@ -198,16 +193,6 @@ body {
   display: none !important;
 }
 
-.app.zen .header-bar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.app.zen .main {
-  flex: 1;
-  justify-content: space-between;
-}
-
 .main {
   flex: 1;
   display: flex;
@@ -217,11 +202,8 @@ body {
 }
 
 .board-wrap {
-  width: 100%;
-}
-
-.controls-wrap {
   position: relative;
+  width: 100%;
 }
 
 .appearance-overlay {
@@ -229,11 +211,10 @@ body {
   inset: 0;
   z-index: 10;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  max-height: 100%;
   overflow: hidden;
 }
 
@@ -257,8 +238,10 @@ body {
 }
 
 .appearance-body {
-  padding: 0.375rem 0.5rem 0.5rem;
+  padding: 0.25rem 0.5rem 0.5rem;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .settings-item {
@@ -311,16 +294,9 @@ body {
   min-width: 8.5rem;
 }
 
-.appearance-overlay .color-menu {
-  position: static;
-  margin-top: 0.25rem;
-  box-shadow: none;
-  width: 100%;
-}
-
 .color-menu-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.25rem;
   margin-bottom: 0.375rem;
 }
