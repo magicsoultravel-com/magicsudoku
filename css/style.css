@@ -396,46 +396,77 @@ body {
 .board-cat {
   position: absolute;
   z-index: 2;
-  width: 32px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   margin: 0;
   pointer-events: none;
-  color: var(--text);
+  --cat-ink: #0a0a0a;
+  --cat-eye: #ff55ff;
+  --cat-cyan: #55ffff;
+  color: var(--cat-ink);
   transform-origin: 50% 100%;
   will-change: left, top, transform;
+  touch-action: none;
+  user-select: none;
 }
 
 .board-cat[hidden] {
   display: none;
 }
 
+.board-cat:not([hidden]) {
+  cursor: grab;
+}
+
+.board-cat.is-dragging {
+  cursor: grabbing;
+  z-index: 4;
+}
+
+.board-cat.is-falling {
+  z-index: 3;
+}
+
 .board-cat .cat-sprite {
   display: block;
-  width: 32px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
 
 .board-cat .cat-sprite .cf {
-  fill: currentColor;
-}
-
-.board-cat .cat-sprite .cs {
-  fill: currentColor;
-  opacity: 0.45;
-}
-
-.board-cat .cat-sprite .cl {
-  fill: var(--surface);
+  fill: var(--cat-ink);
 }
 
 .board-cat .cat-sprite .ce {
-  fill: var(--accent);
+  fill: var(--cat-eye);
 }
 
-.board-cat .cat-sprite .cn {
-  fill: var(--accent);
+.board-cat .cat-view-front {
+  display: none;
+}
+
+.board-cat.is-sitting .cat-view-side,
+.board-cat.is-looking .cat-view-side,
+.board-cat.is-meowing .cat-view-side,
+.board-cat.is-dragging .cat-view-side {
+  display: none;
+}
+
+.board-cat.is-sitting .cat-view-front,
+.board-cat.is-looking .cat-view-front,
+.board-cat.is-meowing .cat-view-front,
+.board-cat.is-dragging .cat-view-front {
+  display: block;
+}
+
+.board-cat.is-falling .cat-view-side {
+  display: block;
+}
+
+.board-cat.is-falling .cat-view-front {
+  display: none;
 }
 
 .board-cat .cat-leg-b {
@@ -458,7 +489,7 @@ body {
 
 .board-cat.is-walking .cat-tail {
   animation: cat-tail-wag 0.4s steps(2) infinite;
-  transform-origin: 10px 12px;
+  transform-origin: 8px 14px;
 }
 
 .board-cat.is-chasing .cat-leg-a,
@@ -472,26 +503,30 @@ body {
 
 .board-cat.is-chasing .cat-tail {
   animation: cat-tail-wag 0.18s steps(2) infinite;
-  transform-origin: 10px 12px;
+  transform-origin: 8px 14px;
 }
 
-.board-cat.is-sitting .cat-legs {
-  transform: translateY(3px) scaleY(0.55);
-  transform-origin: center top;
+.board-cat.is-sitting .cat-sprite,
+.board-cat.is-looking .cat-sprite,
+.board-cat.is-meowing .cat-sprite {
+  transform: rotate(calc(-1 * var(--cat-heading, 0deg)));
 }
 
-.board-cat.is-sitting .cat-body {
-  transform: translateY(1px) scaleY(0.92);
-  transform-origin: center bottom;
+.board-cat.is-sitting .cat-view-front .cat-tail {
+  animation: cat-tail-sway 2.4s steps(2) infinite;
+  transform-origin: 5px 14px;
 }
 
-.board-cat.is-sitting .cat-tail {
-  transform: rotate(12deg);
-  transform-origin: 10px 12px;
+.board-cat.is-lying .cat-view-side {
+  display: block;
+}
+
+.board-cat.is-lying .cat-view-front {
+  display: none;
 }
 
 .board-cat.is-lying .cat-sprite {
-  transform: scale(1.15, 0.72) translateY(4px);
+  transform: scale(1.12, 0.68) translateY(5px);
 }
 
 .board-cat.is-lying .cat-legs {
@@ -500,17 +535,21 @@ body {
 
 .board-cat.is-lying .cat-tail {
   animation: cat-tail-sway 2.4s steps(2) infinite;
-  transform-origin: 10px 12px;
+  transform-origin: 8px 14px;
 }
 
-.board-cat.is-looking .cat-head {
+.board-cat.is-looking .cat-view-front {
   animation: cat-look-around 1.4s steps(2) infinite;
-  transform-origin: 24px 8px;
+  transform-origin: 12px 12px;
 }
 
-.board-cat.is-meowing .cat-head {
+.board-cat.is-meowing .cat-view-front {
   animation: cat-meow-nod 0.4s steps(2) 3;
-  transform-origin: 24px 8px;
+  transform-origin: 12px 10px;
+}
+
+.board-cat.is-dragging .cat-sprite {
+  filter: drop-shadow(0 0 0 var(--cat-cyan)) drop-shadow(1px 1px 0 var(--cat-cyan));
 }
 
 .cat-speech {
@@ -519,8 +558,9 @@ body {
   bottom: calc(100% + 2px);
   transform: translateX(-50%);
   z-index: 1;
-  background: var(--surface);
-  border: 2px solid var(--text);
+  background: #ff55ff;
+  color: #0a0a0a;
+  border: 2px solid #0a0a0a;
   border-radius: 0;
   padding: 1px 6px 2px;
   font-size: 8px;
@@ -528,7 +568,7 @@ body {
   font-family: "Courier New", Courier, monospace;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--text);
+  box-shadow: 2px 2px 0 #0a0a0a;
   image-rendering: pixelated;
   animation: cat-speech-pop 0.2s steps(3);
 }
@@ -540,7 +580,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: var(--text);
+  border-top-color: #0a0a0a;
 }
 
 .cat-speech::after {
@@ -550,7 +590,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: var(--surface);
+  border-top-color: #ff55ff;
 }
 
 .cat-speech[hidden] {
@@ -562,7 +602,8 @@ body {
   z-index: 1;
   width: 10px;
   height: 8px;
-  color: var(--text-muted);
+  --cat-ink: #0a0a0a;
+  --cat-eye: #55ffff;
   pointer-events: none;
   transform-origin: 50% 100%;
   image-rendering: pixelated;
@@ -571,11 +612,11 @@ body {
 }
 
 .cat-mouse .cf {
-  fill: currentColor;
+  fill: var(--cat-ink);
 }
 
 .cat-mouse .ce {
-  fill: var(--accent);
+  fill: var(--cat-eye);
 }
 
 .cat-mouse[hidden] {
