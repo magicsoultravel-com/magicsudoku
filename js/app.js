@@ -41,6 +41,7 @@
   const btnZen = document.getElementById("btn-zen");
   const btnCat = document.getElementById("btn-companion-cat");
   const boardCat = document.getElementById("board-cat");
+  const cellPicker = document.getElementById("cell-picker");
 
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
@@ -82,6 +83,8 @@
   let menuOpen = false;
   let confirmCallback = null;
   let quoteSplashActive = false;
+  let cellPickerOpen = false;
+  let cellPickerCell = null;
   let gamesStarted = 0;
   let gamesCompleted = 0;
 
@@ -510,9 +513,11 @@
       if (pencilMode && activeNumber) {
         parts.push(`Pencil ${activeNumber} — click to mark`);
       } else if (pencilMode) {
-        parts.push("Pencil mode — pick a number first");
-      } else {
+        parts.push("Tap cell to pick a note");
+      } else if (activeNumber) {
         parts.push("Tap a number to fill");
+      } else {
+        parts.push("Tap cell to pick a number");
       }
     }
     return parts.join(" · ");
@@ -530,6 +535,98 @@
       btn.addEventListener("click", () => onNumpadClick(n));
       numpadEl.appendChild(btn);
     }
+  }
+
+  function buildCellPicker() {
+    cellPicker.innerHTML = "";
+    for (let n = 1; n <= 9; n++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cell-picker-btn";
+      btn.textContent = n;
+      btn.dataset.num = n;
+      btn.addEventListener("click", (e) => onCellPickerClick(n, e));
+      cellPicker.appendChild(btn);
+    }
+  }
+
+  function shouldShowCellPicker(row, col) {
+    if (gameWon || given[row][col]) return false;
+    if (activeNumber !== null) return false;
+    if (pencilMode && puzzle[row][col] !== 0) return false;
+    return true;
+  }
+
+  function closeCellPicker() {
+    if (!cellPickerOpen) return;
+    cellPickerOpen = false;
+    cellPickerCell = null;
+    cellPicker.classList.remove("is-open");
+    cellPicker.hidden = true;
+  }
+
+  function syncCellPicker() {
+    if (!cellPickerCell) return;
+    const { row, col } = cellPickerCell;
+    cellPicker.querySelectorAll(".cell-picker-btn").forEach((btn) => {
+      const num = +btn.dataset.num;
+      const blocked =
+        !pencilMode && puzzle[row][col] === 0 && !Sudoku.isValid(puzzle, row, col, num);
+      btn.disabled = blocked;
+      btn.classList.toggle("active", pencilMode && notes[row][col].has(num));
+    });
+  }
+
+  function positionCellPicker(row, col) {
+    const cell = boardEl.children[row * 9 + col];
+    if (!cell) return;
+
+    cellPicker.hidden = false;
+    cellPicker.classList.remove("is-open");
+
+    const wrapRect = boardWrap.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const pickerW = cellPicker.offsetWidth || Math.min(boardWrap.clientWidth * 0.42, 116);
+    const pickerH = cellPicker.offsetHeight || pickerW;
+
+    let left = cellRect.left - wrapRect.left + cellRect.width / 2 - pickerW / 2;
+    let top = cellRect.top - wrapRect.top + cellRect.height / 2 - pickerH / 2;
+
+    left = Math.max(2, Math.min(left, boardWrap.clientWidth - pickerW - 2));
+    top = Math.max(2, Math.min(top, boardWrap.clientHeight - pickerH - 2));
+
+    cellPicker.style.left = `${left}px`;
+    cellPicker.style.top = `${top}px`;
+  }
+
+  function openCellPicker(row, col) {
+    cellPickerCell = { row, col };
+    cellPickerOpen = true;
+    positionCellPicker(row, col);
+    syncCellPicker();
+    requestAnimationFrame(() => cellPicker.classList.add("is-open"));
+  }
+
+  function onCellPickerClick(num, e) {
+    e.stopPropagation();
+    if (!cellPickerCell || gameWon) return;
+
+    const { row, col } = cellPickerCell;
+    if (given[row][col]) return;
+
+    selected = { row, col };
+
+    if (pencilMode) {
+      if (puzzle[row][col] === 0) toggleNoteAt(row, col, num);
+      syncCellPicker();
+      positionCellPicker(row, col);
+      return;
+    }
+
+    if (puzzle[row][col] === 0 && !Sudoku.isValid(puzzle, row, col, num)) return;
+
+    placeNumber(num);
+    closeCellPicker();
   }
 
   function getHighlightNumber() {
@@ -630,9 +727,18 @@
     }
     if (animateBoardReveal) animateBoardReveal = false;
     updateNumpad();
+    if (cellPickerOpen && cellPickerCell) {
+      const { row, col } = cellPickerCell;
+      requestAnimationFrame(() => {
+        positionCellPicker(row, col);
+        syncCellPicker();
+      });
+    }
   }
 
   function onNumpadClick(num) {
+    closeCellPicker();
+
     if (pencilMode) {
       activeNumber = activeNumber === num ? null : num;
       renderBoard();
@@ -679,12 +785,14 @@
     if (pencilMode && activeNumber && !given[row][col] && puzzle[row][col] === 0) {
       selected = { row, col };
       toggleNoteAt(row, col, activeNumber);
+      closeCellPicker();
       return;
     }
 
     if (selected && selected.row === row && selected.col === col) {
       selected = null;
       activeNumber = null;
+      closeCellPicker();
       clearErrors();
       renderBoard();
       saveGame();
@@ -692,6 +800,16 @@
     }
 
     selected = { row, col };
+
+    if (shouldShowCellPicker(row, col)) {
+      clearErrors();
+      renderBoard();
+      openCellPicker(row, col);
+      saveGame();
+      return;
+    }
+
+    closeCellPicker();
     if (!pencilMode) {
       const val = puzzle[row][col];
       activeNumber = val || null;
@@ -761,6 +879,7 @@
     notes[row][col].clear();
     ensureTimerRunning();
     clearErrors();
+    closeCellPicker();
     renderBoard();
     setStatus("");
     saveGame();
@@ -769,6 +888,7 @@
   function togglePencil() {
     pencilMode = !pencilMode;
     btnPencil.classList.toggle("active", pencilMode);
+    closeCellPicker();
     if (selected) renderBoard();
     saveGame();
   }
@@ -1211,6 +1331,13 @@
     ) {
       closeThemePicker();
     }
+    if (
+      cellPickerOpen &&
+      !e.target.closest("#cell-picker") &&
+      !e.target.closest(".cell")
+    ) {
+      closeCellPicker();
+    }
   });
   document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
@@ -1244,6 +1371,7 @@
     loadStats();
     loadSeedHistory();
     buildNumpad();
+    buildCellPicker();
     startAutoSave();
 
     await showQuoteSplash();

@@ -12,17 +12,17 @@ window.CatModels = (() => {
           <rect class="cat-eye" x="55" y="23" width="1.6" height="1.6"/>
         </g>
         <g class="cat-legs">
-          <g class="cat-leg cat-leg-a">
+          <g class="cat-leg cat-leg-l1">
             <path class="cf" d="M23 30 L23.5 39 L22.6 41 L24.4 41 L25.1 39 L24.8 30 Z"/>
-            <path class="cf" d="M28 30 L28.5 39 L27.6 41 L29.4 41 L30.1 39 L29.8 30 Z"/>
-            <path class="cf" d="M40 30 L40.5 39 L39.6 41 L41.4 41 L42.1 39 L41.8 30 Z"/>
-            <path class="cf" d="M47 30 L47.5 39 L46.6 41 L48.4 41 L49.1 39 L48.8 30 Z"/>
           </g>
-          <g class="cat-leg cat-leg-b">
-            <path class="cf" d="M23 30 L23.4 38 L22.5 40 L24.5 40 L25.1 38 L24.7 30 Z"/>
-            <path class="cf" d="M28 30 L28.4 38 L27.5 40 L29.5 40 L30.1 38 L29.7 30 Z"/>
-            <path class="cf" d="M40 30 L40.4 38 L39.5 40 L41.5 40 L42.1 38 L41.7 30 Z"/>
-            <path class="cf" d="M47 30 L47.4 38 L46.5 40 L48.5 40 L49.1 38 L48.7 30 Z"/>
+          <g class="cat-leg cat-leg-l2">
+            <path class="cf" d="M28 30 L28.5 39 L27.6 41 L29.4 41 L30.1 39 L29.8 30 Z"/>
+          </g>
+          <g class="cat-leg cat-leg-l3">
+            <path class="cf" d="M40 30 L40.5 39 L39.6 41 L41.4 41 L42.1 39 L41.8 30 Z"/>
+          </g>
+          <g class="cat-leg cat-leg-l4">
+            <path class="cf" d="M47 30 L47.5 39 L46.6 41 L48.4 41 L49.1 39 L48.8 30 Z"/>
           </g>
         </g>
       </g>

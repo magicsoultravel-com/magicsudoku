@@ -487,6 +487,68 @@ body {
   pointer-events: none;
 }
 
+.cell-picker {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 3px;
+  width: min(42%, 7.25rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+
+.cell-picker[hidden] {
+  display: none;
+}
+
+.cell-picker.is-open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.cell-picker-btn {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cell-picker-btn:hover:not(:disabled) {
+  background: var(--highlight);
+}
+
+.cell-picker-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.cell-picker-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.cell-picker-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .board-cat {
   position: absolute;
   z-index: 2;
@@ -507,6 +569,10 @@ body {
 
 .board-cat:not([hidden]) {
   cursor: grab;
+}
+
+.board-cat.is-petting {
+  cursor: pointer;
 }
 
 .board-cat.is-dragging {
@@ -547,12 +613,14 @@ body {
 }
 
 .board-cat.is-sitting .cat-view-side,
-.board-cat.is-meowing .cat-view-side {
+.board-cat.is-meowing .cat-view-side,
+.board-cat.is-petting .cat-view-side {
   display: none;
 }
 
 .board-cat.is-sitting .cat-view-front,
-.board-cat.is-meowing .cat-view-front {
+.board-cat.is-meowing .cat-view-front,
+.board-cat.is-petting .cat-view-front {
   display: block;
 }
 
@@ -575,12 +643,9 @@ body {
 .board-cat.is-falling .cat-leg-a,
 .board-cat.is-falling .cat-leg-b,
 .board-cat.is-dragging .cat-leg-a,
-.board-cat.is-dragging .cat-leg-b {
+.board-cat.is-dragging .cat-leg-b,
+.board-cat.is-petting .cat-legs {
   animation: none;
-}
-
-.board-cat .cat-leg-b {
-  display: none;
 }
 
 .board-cat.is-walking .cat-tail,
@@ -589,31 +654,54 @@ body {
   transform-origin: 14px 28px;
 }
 
-.board-cat.is-walking .cat-leg-b,
-.board-cat.is-chasing .cat-leg-b {
-  display: block;
+.board-cat.is-walking .cat-leg,
+.board-cat.is-chasing .cat-leg {
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
 
-.board-cat.is-walking .cat-leg-a,
-.board-cat.is-walking .cat-leg-b {
-  animation: cat-quad-step 0.9s steps(2) infinite;
+.board-cat.is-walking .cat-leg-l1,
+.board-cat.is-walking .cat-leg-l3 {
+  animation-name: cat-leg-swing-a;
+  animation-duration: 0.9s;
 }
 
-.board-cat.is-walking .cat-leg-b {
-  animation-direction: reverse;
+.board-cat.is-walking .cat-leg-l2,
+.board-cat.is-walking .cat-leg-l4 {
+  animation-name: cat-leg-swing-b;
+  animation-duration: 0.9s;
+}
+
+.board-cat.is-chasing .cat-leg-l1,
+.board-cat.is-chasing .cat-leg-l3 {
+  animation-name: cat-leg-swing-a;
+  animation-duration: 0.55s;
+}
+
+.board-cat.is-chasing .cat-leg-l2,
+.board-cat.is-chasing .cat-leg-l4 {
+  animation-name: cat-leg-swing-b;
+  animation-duration: 0.55s;
 }
 
 .board-cat.is-chasing .cat-tail {
   animation-duration: 0.55s;
 }
 
-.board-cat.is-chasing .cat-leg-a,
-.board-cat.is-chasing .cat-leg-b {
-  animation: cat-quad-step 0.55s steps(2) infinite;
+.board-cat .cat-leg-l1 {
+  transform-origin: 24px 30px;
 }
 
-.board-cat.is-chasing .cat-leg-b {
-  animation-direction: reverse;
+.board-cat .cat-leg-l2 {
+  transform-origin: 29px 30px;
+}
+
+.board-cat .cat-leg-l3 {
+  transform-origin: 41px 30px;
+}
+
+.board-cat .cat-leg-l4 {
+  transform-origin: 48px 30px;
 }
 
 .board-cat .cat-head {
@@ -630,8 +718,24 @@ body {
 }
 
 .board-cat.is-sitting .cat-sprite,
-.board-cat.is-meowing .cat-sprite {
+.board-cat.is-meowing .cat-sprite,
+.board-cat.is-petting .cat-sprite {
   transform: rotate(calc(-1 * var(--cat-heading, 0deg)));
+}
+
+.board-cat.is-petting .cat-view-front {
+  animation: cat-pet-purr 0.55s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+.board-cat.is-petting .cat-eye {
+  transform: scaleY(0.35);
+  transform-origin: center;
+}
+
+.board-cat.is-petting .cat-tail {
+  animation: cat-pet-tail 0.45s ease-in-out infinite alternate;
+  transform-origin: 10px 29px;
 }
 
 .board-cat.is-meowing .cat-mouth {
@@ -727,20 +831,47 @@ body {
   }
 }
 
-@keyframes cat-quad-step {
+@keyframes cat-leg-swing-a {
   0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
   100% {
-    opacity: 0;
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes cat-leg-swing-b {
+  0%,
+  100% {
+    transform: rotate(16deg);
+  }
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+
+@keyframes cat-pet-purr {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.03, 0.97);
+  }
+}
+
+@keyframes cat-pet-tail {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(10deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-cat .cat-leg-a,
-  .board-cat .cat-leg-b,
+  .board-cat .cat-leg,
   .board-cat .cat-tail,
   .board-cat .cat-view-front {
     animation: none !important;

@@ -36,9 +36,15 @@
   let fallAnim = null;
   let lookStep = 0;
   let lookStepTimer = 0;
+  let pointerDownX = 0;
+  let pointerDownY = 0;
+  let petTimer = 0;
 
   const LOOK_SEQUENCE = ["center", "left", "center", "right", "center"];
   const LOOK_STEP_MS = 700;
+  const DRAG_THRESHOLD = 8;
+  const PET_MIN_MS = 2200;
+  const PET_MAX_MS = 3200;
 
   function rand(min, max) {
     return min + Math.random() * (max - min);
@@ -164,6 +170,7 @@
     boardCat.classList.toggle("is-chasing", pose === "chase");
     boardCat.classList.toggle("is-dragging", pose === "drag");
     boardCat.classList.toggle("is-falling", pose === "fall");
+    boardCat.classList.toggle("is-petting", pose === "pet");
     if (pose !== "look") {
       lookStep = 0;
       setLookDir("center");
@@ -185,6 +192,13 @@
 
   function hideSpeech() {
     if (speechEl) speechEl.hidden = true;
+  }
+
+  function showPurr() {
+    if (!speechEl) return;
+    const lines = ["Prrrr…", "Purrr~", "Mrrrp…"];
+    speechEl.querySelector("span").textContent = lines[randInt(0, lines.length - 1)];
+    speechEl.hidden = false;
   }
 
   function showSpeech() {
@@ -351,13 +365,29 @@
     }
   }
 
-  function onPointerDown(e) {
-    if (!running || interaction !== "patrol") return;
-    if (e.button !== 0) return;
+  function startPet() {
+    interaction = "pet";
+    state = "pet";
+    setPose("pet");
+    hideMouse();
+    showPurr();
+    petTimer = rand(PET_MIN_MS, PET_MAX_MS);
+    applyPosition(progress);
+  }
 
-    e.preventDefault();
-    boardCat.setPointerCapture(e.pointerId);
+  function finishPet() {
+    interaction = "patrol";
+    hideSpeech();
+    enterIdle("sit");
+  }
 
+  function tickPet(dt) {
+    petTimer -= dt * 1000;
+    applyPosition(progress);
+    if (petTimer <= 0) finishPet();
+  }
+
+  function beginDrag(e) {
     interaction = "drag";
     state = "drag";
     setPose("drag");
@@ -378,7 +408,28 @@
     applyFreePosition(freeX, freeY, 0, false);
   }
 
+  function onPointerDown(e) {
+    if (!running || interaction !== "patrol") return;
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+    boardCat.setPointerCapture(e.pointerId);
+
+    interaction = "pending";
+    pointerDownX = e.clientX;
+    pointerDownY = e.clientY;
+  }
+
   function onPointerMove(e) {
+    if (interaction === "pending") {
+      const dx = e.clientX - pointerDownX;
+      const dy = e.clientY - pointerDownY;
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+        beginDrag(e);
+      }
+      return;
+    }
+
     if (interaction !== "drag") return;
 
     const wrapPt = wrapPoint(e.clientX, e.clientY);
@@ -388,6 +439,16 @@
   }
 
   function onPointerUp(e) {
+    if (interaction === "pending") {
+      try {
+        boardCat.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
+      startPet();
+      return;
+    }
+
     if (interaction !== "drag") return;
 
     try {
@@ -400,6 +461,15 @@
   }
 
   function onPointerCancel(e) {
+    if (interaction === "pending") {
+      try {
+        boardCat.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
+      interaction = "patrol";
+      return;
+    }
     if (interaction === "drag") {
       onPointerUp(e);
     }
@@ -447,6 +517,8 @@
 
     if (interaction === "fall") {
       tickFall(dt);
+    } else if (interaction === "pet") {
+      tickPet(dt);
     } else if (interaction === "patrol") {
       if (reducedMotion) {
         applyPosition(progress);
