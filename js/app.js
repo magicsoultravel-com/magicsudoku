@@ -294,9 +294,12 @@
   function setCatCompanion(enabled) {
     catCompanion = enabled;
     boardCat.hidden = !enabled;
+    boardCat.setAttribute("aria-hidden", enabled ? "false" : "true");
     btnCat.classList.toggle("active", enabled);
     btnCat.title = enabled ? "Hide companion cat" : "Companion cat";
     localStorage.setItem("sudoku-cat", enabled ? "1" : "0");
+    if (enabled) CatCompanion.start();
+    else CatCompanion.stop();
   }
 
   function initPreferences() {
@@ -1147,6 +1150,8 @@
     if (document.visibilityState === "hidden") saveGame();
   });
   window.addEventListener("beforeunload", saveGame);
+
+  CatCompanion.init(boardWrap, boardCat, document.getElementById("board-cat-mouse"));
 
   async function boot() {
     initPreferences();

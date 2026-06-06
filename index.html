@@ -77,20 +77,28 @@
     <main class="main">
       <div class="board-wrap">
         <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
-        <div id="board-cat" class="board-cat" hidden aria-hidden="true">
+        <div id="board-cat" class="board-cat" data-pose="walk" hidden aria-hidden="true">
+          <div class="cat-speech" hidden aria-hidden="true"><span>Meow!</span></div>
           <svg class="cat-sprite" viewBox="0 0 16 16" width="22" height="22" aria-hidden="true">
             <path class="cat-tail" d="M1.5 9.5Q.5 7 2 5.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-            <rect x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/>
-            <rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/>
-            <path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/>
-            <path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/>
-            <rect x="11.5" y="6.2" width="1.2" height="1.2" rx=".2" fill="var(--bg)"/>
+            <rect class="cat-body" x="3.5" y="7" width="7" height="4.5" rx="1.2" fill="currentColor"/>
+            <g class="cat-head">
+              <rect x="8.5" y="4.5" width="5" height="4" rx="1.8" fill="currentColor"/>
+              <path d="M9 4.5L9.5 2.5L10.8 4" fill="currentColor"/>
+              <path d="M12 4.2L13 2.5L14 4.5" fill="currentColor"/>
+              <rect x="11.5" y="6.2" width="1.2" height="1.2" rx=".2" fill="var(--bg)"/>
+            </g>
             <g class="cat-legs">
               <rect class="cat-leg cat-leg-a" x="5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
               <rect class="cat-leg cat-leg-b" x="8.5" y="11.2" width="1.5" height="2.8" rx=".35" fill="currentColor"/>
             </g>
           </svg>
         </div>
+        <svg id="board-cat-mouse" class="cat-mouse" viewBox="0 0 12 12" width="10" height="10" hidden aria-hidden="true">
+          <ellipse cx="6" cy="6.5" rx="4" ry="3" fill="currentColor" opacity="0.75"/>
+          <circle cx="9.2" cy="4.8" r="1.1" fill="currentColor" opacity="0.75"/>
+          <path d="M2 6.5Q.5 5.5 1 4" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.75"/>
+        </svg>
       </div>
 
       <div class="controls bottom-interface">
@@ -183,6 +191,7 @@
   <script src="js/quotes.js"></script>
   <script src="js/lessons.js"></script>
   <script src="js/settings.js"></script>
+  <script src="js/cat.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
