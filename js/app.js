@@ -38,6 +38,9 @@
 
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
+  const STATS_KEY = "sudoku-stats";
+  const statsStartedEl = document.getElementById("stats-started");
+  const statsCompletedEl = document.getElementById("stats-completed");
   const MAX_SEEDS = 10;
   const HISTORY_LIMIT = 10;
   const THEMES = ["dark", "light", "slate", "ocean", "dusk"];
@@ -66,6 +69,8 @@
   let menuOpen = false;
   let confirmCallback = null;
   let quoteSplashActive = false;
+  let gamesStarted = 0;
+  let gamesCompleted = 0;
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -817,9 +822,50 @@
     gameWon = true;
     stopTimer();
     timerRunning = false;
+    recordGameCompleted();
     setStatus("Solved!", "ok");
     updateUndoRedo();
     saveGame();
+  }
+
+  function loadStats() {
+    try {
+      const stats = JSON.parse(localStorage.getItem(STATS_KEY) || "{}");
+      gamesStarted = Number.isFinite(stats.started) ? stats.started : 0;
+      gamesCompleted = Number.isFinite(stats.completed) ? stats.completed : 0;
+    } catch {
+      gamesStarted = 0;
+      gamesCompleted = 0;
+    }
+    renderStats();
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem(
+        STATS_KEY,
+        JSON.stringify({ started: gamesStarted, completed: gamesCompleted })
+      );
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  function renderStats() {
+    statsStartedEl.textContent = String(gamesStarted);
+    statsCompletedEl.textContent = String(gamesCompleted);
+  }
+
+  function recordGameStarted() {
+    gamesStarted += 1;
+    renderStats();
+    saveStats();
+  }
+
+  function recordGameCompleted() {
+    gamesCompleted += 1;
+    renderStats();
+    saveStats();
   }
 
   function loadSeedHistory() {
@@ -898,6 +944,7 @@
     await wait(260);
 
     applyGameResult(Sudoku.generate(difficulty));
+    recordGameStarted();
     animateBoardReveal = true;
     renderBoard();
     boardWrap.classList.remove("is-clearing");
@@ -1090,6 +1137,7 @@
 
   async function boot() {
     initPreferences();
+    loadStats();
     loadSeedHistory();
     buildNumpad();
     startAutoSave();

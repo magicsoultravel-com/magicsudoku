@@ -1,5 +1,5 @@
 const Quotes = (() => {
-  const INDEX_KEY = "sudoku-quote-index";
+  const DECK_KEY = "sudoku-quote-deck";
 
   const AUTHOR_CIRCA = {
     "Marcus Aurelius": "c. 121–180",
@@ -172,11 +172,50 @@ const Quotes = (() => {
     return `${entry.author} · ${circaFor(entry)}`;
   }
 
+  function shuffleOrder(length) {
+    const order = Array.from({ length }, (_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return order;
+  }
+
+  function loadDeckState() {
+    try {
+      const raw = localStorage.getItem(DECK_KEY);
+      if (!raw) return null;
+      const state = JSON.parse(raw);
+      if (!Array.isArray(state.order) || state.order.length !== LIST.length) return null;
+      if (typeof state.pos !== "number" || state.pos < 0 || state.pos >= LIST.length) return null;
+      return state;
+    } catch {
+      return null;
+    }
+  }
+
+  function saveDeckState(state) {
+    try {
+      localStorage.setItem(DECK_KEY, JSON.stringify(state));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
   function nextQuote() {
-    let index = parseInt(localStorage.getItem(INDEX_KEY) || "0", 10);
-    if (!Number.isFinite(index) || index < 0) index = 0;
-    const entry = LIST[index % LIST.length];
-    localStorage.setItem(INDEX_KEY, String((index + 1) % LIST.length));
+    let state = loadDeckState();
+    if (!state) {
+      state = { order: shuffleOrder(LIST.length), pos: 0 };
+    }
+
+    const entry = LIST[state.order[state.pos]];
+    state.pos += 1;
+    if (state.pos >= LIST.length) {
+      saveDeckState({ order: shuffleOrder(LIST.length), pos: 0 });
+    } else {
+      saveDeckState(state);
+    }
+
     const circa = circaFor(entry);
     return { text: entry.text, author: entry.author, circa, attribution: formatAttribution(entry) };
   }
