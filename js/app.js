@@ -10,8 +10,9 @@
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
-  const settingsDialog = document.getElementById("settings-dialog");
+  const settingsPanel = document.getElementById("settings-panel");
   const settingsColors = document.getElementById("settings-colors");
+  const btnSettings = document.getElementById("btn-settings");
   const seedList = document.getElementById("seed-list");
   const currentSeedEl = document.getElementById("current-seed");
 
@@ -43,6 +44,7 @@
   let currentSeed = null;
   let currentDifficulty = null;
   let seedHistory = [];
+  let settingsOpen = false;
 
   function emptyNotes() {
     return Array.from({ length: 9 }, () =>
@@ -119,9 +121,18 @@
     Settings.reset();
     setTheme(DEFAULT_THEME);
     if (settingsColors.childElementCount) {
-      Settings.syncDialog(settingsColors);
+      Settings.syncPanel(settingsColors);
     }
     saveGame();
+  }
+
+  function closeSettings() {
+    if (!settingsOpen) return;
+    settingsOpen = false;
+    settingsPanel.hidden = true;
+    appEl.classList.remove("settings-open");
+    btnSettings.classList.remove("active");
+    Settings.closeAllMenus();
   }
 
   function setZen(enabled) {
@@ -130,6 +141,7 @@
     btnZen.classList.toggle("active", zenMode);
     btnZen.title = zenMode ? "Exit zen mode" : "Zen mode — focus on the puzzle";
     localStorage.setItem("sudoku-zen", zenMode ? "1" : "0");
+    if (zenMode) closeSettings();
   }
 
   function initPreferences() {
@@ -645,13 +657,20 @@
     lessonsDialog.showModal();
   }
 
-  function openSettings() {
-    if (!settingsColors.childElementCount) {
-      Settings.buildDialog(settingsColors);
-    } else {
-      Settings.syncDialog(settingsColors);
+  function toggleSettings() {
+    if (settingsOpen) {
+      closeSettings();
+      return;
     }
-    settingsDialog.showModal();
+    settingsOpen = true;
+    settingsPanel.hidden = false;
+    appEl.classList.add("settings-open");
+    btnSettings.classList.add("active");
+    if (!settingsColors.childElementCount) {
+      Settings.buildPanel(settingsColors);
+    } else {
+      Settings.syncPanel(settingsColors);
+    }
   }
 
   function handleKeydown(e) {
@@ -727,18 +746,14 @@
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
-  document.getElementById("btn-settings").addEventListener("click", openSettings);
+  btnSettings.addEventListener("click", toggleSettings);
   document.getElementById("lessons-close").addEventListener("click", () => lessonsDialog.close());
   document.getElementById("seeds-close").addEventListener("click", () => seedsDialog.close());
-  document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
   lessonsDialog.addEventListener("click", (e) => {
     if (e.target === lessonsDialog) lessonsDialog.close();
   });
   seedsDialog.addEventListener("click", (e) => {
     if (e.target === seedsDialog) seedsDialog.close();
-  });
-  settingsDialog.addEventListener("click", (e) => {
-    if (e.target === settingsDialog) settingsDialog.close();
   });
   document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {

@@ -1,24 +1,11 @@
 const Settings = (() => {
   const STORAGE_KEY = "sudoku-colors";
-  const CUSTOM = "__custom__";
 
   const PRESETS = [
-    { value: "#ffffff", label: "White" },
-    { value: "#000000", label: "Black" },
-    { value: "#ef4444", label: "Red" },
-    { value: "#f97316", label: "Orange" },
-    { value: "#eab308", label: "Yellow" },
-    { value: "#22c55e", label: "Green" },
-    { value: "#14b8a6", label: "Teal" },
-    { value: "#06b6d4", label: "Cyan" },
-    { value: "#3b82f6", label: "Blue" },
-    { value: "#6366f1", label: "Indigo" },
-    { value: "#8b5cf6", label: "Violet" },
-    { value: "#ec4899", label: "Pink" },
-    { value: "#78716c", label: "Stone" },
-    { value: "#64748b", label: "Slate" },
-    { value: "#1e293b", label: "Navy" },
-    { value: "#94a3b8", label: "Silver" },
+    "#ffffff", "#000000", "#ef4444", "#f97316",
+    "#eab308", "#22c55e", "#14b8a6", "#06b6d4",
+    "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899",
+    "#78716c", "#64748b", "#1e293b", "#94a3b8",
   ];
 
   const FIELDS = [
@@ -30,10 +17,8 @@ const Settings = (() => {
   ];
 
   let colors = {};
-
-  function isPreset(value) {
-    return PRESETS.some((p) => p.value === value);
-  }
+  let openMenu = null;
+  let panelContainer = null;
 
   function load() {
     try {
@@ -60,13 +45,11 @@ const Settings = (() => {
   }
 
   function setColor(id, value) {
-    if (!value) {
-      delete colors[id];
-    } else {
-      colors[id] = value;
-    }
+    if (!value) delete colors[id];
+    else colors[id] = value;
     save();
     apply();
+    if (panelContainer) syncPanel(panelContainer);
   }
 
   function getColor(id) {
@@ -77,118 +60,165 @@ const Settings = (() => {
     colors = {};
     localStorage.removeItem(STORAGE_KEY);
     apply();
+    if (panelContainer) syncPanel(panelContainer);
   }
 
-  function selectValueForField(id) {
-    const value = getColor(id);
-    if (!value) return "";
-    if (isPreset(value)) return value;
-    return CUSTOM;
+  function closeAllMenus() {
+    if (!panelContainer) return;
+    panelContainer.querySelectorAll(".color-menu").forEach((m) => {
+      m.hidden = true;
+    });
+    panelContainer.querySelectorAll(".color-toggle").forEach((b) => {
+      b.setAttribute("aria-expanded", "false");
+    });
+    openMenu = null;
   }
 
-  function buildDialog(container) {
+  function toggleMenu(menu, toggleBtn) {
+    const willOpen = menu.hidden;
+    closeAllMenus();
+    if (willOpen) {
+      menu.hidden = false;
+      toggleBtn.setAttribute("aria-expanded", "true");
+      openMenu = menu;
+    }
+  }
+
+  function updateCurrentSwatch(swatch, fieldId) {
+    const value = getColor(fieldId);
+    swatch.classList.toggle("is-theme", !value);
+    if (value) swatch.style.backgroundColor = value;
+    else swatch.style.backgroundColor = "";
+  }
+
+  function buildPanel(container) {
+    panelContainer = container;
     container.innerHTML = "";
 
     FIELDS.forEach((field) => {
-      const row = document.createElement("div");
-      row.className = "setting-row";
-      row.dataset.field = field.id;
+      const item = document.createElement("div");
+      item.className = "settings-item";
+      item.dataset.field = field.id;
 
-      const label = document.createElement("label");
-      label.className = "setting-label";
+      const head = document.createElement("div");
+      head.className = "settings-item-head";
+
+      const label = document.createElement("span");
+      label.className = "settings-item-label";
       label.textContent = field.label;
-      label.htmlFor = `setting-${field.id}`;
 
-      const select = document.createElement("select");
-      select.id = `setting-${field.id}`;
-      select.className = "setting-select";
+      const current = document.createElement("span");
+      current.className = "color-current-swatch";
+      current.title = "Current color";
 
-      const defaultOpt = document.createElement("option");
-      defaultOpt.value = "";
-      defaultOpt.textContent = "Theme default";
-      select.appendChild(defaultOpt);
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "btn btn-icon color-toggle";
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", `Choose color for ${field.label}`);
+      toggle.innerHTML =
+        '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
-      PRESETS.forEach((preset) => {
-        const opt = document.createElement("option");
-        opt.value = preset.value;
-        opt.textContent = preset.label;
-        select.appendChild(opt);
+      const menu = document.createElement("div");
+      menu.className = "color-menu";
+      menu.hidden = true;
+
+      const grid = document.createElement("div");
+      grid.className = "color-menu-grid";
+
+      const defaultBtn = document.createElement("button");
+      defaultBtn.type = "button";
+      defaultBtn.className = "color-opt theme-default";
+      defaultBtn.title = "Theme default";
+      defaultBtn.addEventListener("click", () => {
+        setColor(field.id, "");
+        closeAllMenus();
+      });
+      grid.appendChild(defaultBtn);
+
+      PRESETS.forEach((hex) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "color-opt";
+        btn.style.backgroundColor = hex;
+        btn.title = hex;
+        btn.dataset.color = hex;
+        btn.addEventListener("click", () => {
+          setColor(field.id, hex);
+          closeAllMenus();
+        });
+        grid.appendChild(btn);
       });
 
-      const customOpt = document.createElement("option");
-      customOpt.value = CUSTOM;
-      customOpt.textContent = "Custom…";
-      select.appendChild(customOpt);
+      const pickerWrap = document.createElement("label");
+      pickerWrap.className = "color-picker-label";
+      pickerWrap.title = "Custom color";
 
       const picker = document.createElement("input");
       picker.type = "color";
-      picker.className = "setting-color-picker";
-      picker.title = "Custom color";
-      picker.hidden = true;
-
-      select.addEventListener("change", () => {
-        if (select.value === "") {
-          picker.hidden = true;
-          setColor(field.id, "");
-        } else if (select.value === CUSTOM) {
-          picker.hidden = false;
-          if (!getColor(field.id) || isPreset(getColor(field.id))) {
-            picker.value = "#3b82f6";
-            setColor(field.id, picker.value);
-          } else {
-            picker.value = getColor(field.id);
-          }
-        } else {
-          picker.hidden = true;
-          setColor(field.id, select.value);
-        }
-        syncDialog(container);
-      });
-
+      picker.className = "color-menu-picker";
+      picker.value = getColor(field.id) || "#3b82f6";
       picker.addEventListener("input", () => {
         setColor(field.id, picker.value);
-        syncDialog(container);
       });
 
-      row.append(label, select, picker);
-      container.appendChild(row);
+      pickerWrap.appendChild(picker);
+      menu.append(grid, pickerWrap);
+
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMenu(menu, toggle);
+      });
+
+      head.append(label, current, toggle);
+      item.append(head, menu);
+      container.appendChild(item);
+
+      updateCurrentSwatch(current, field.id);
     });
 
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
     resetBtn.className = "btn btn-reset";
-    resetBtn.textContent = "Reset all (Dark theme)";
+    resetBtn.textContent = "Reset";
     resetBtn.addEventListener("click", () => {
       document.dispatchEvent(new CustomEvent("sudoku:reset-appearance"));
     });
     container.appendChild(resetBtn);
 
-    syncDialog(container);
+    document.addEventListener("click", (e) => {
+      if (!openMenu) return;
+      if (e.target.closest(".settings-item")) return;
+      closeAllMenus();
+    });
   }
 
-  function syncDialog(container) {
+  function syncPanel(container) {
     FIELDS.forEach((field) => {
-      const row = container.querySelector(`[data-field="${field.id}"]`);
-      if (!row) return;
+      const item = container.querySelector(`[data-field="${field.id}"]`);
+      if (!item) return;
 
-      const select = row.querySelector(".setting-select");
-      const picker = row.querySelector(".setting-color-picker");
+      const swatch = item.querySelector(".color-current-swatch");
+      updateCurrentSwatch(swatch, field.id);
+
       const value = getColor(field.id);
-      const selected = selectValueForField(field.id);
+      item.querySelectorAll(".color-opt:not(.theme-default)").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.color === value);
+      });
+      item.querySelector(".theme-default")?.classList.toggle("active", !value);
 
-      select.value = selected;
-      picker.hidden = selected !== CUSTOM;
-      if (selected === CUSTOM && value) picker.value = value;
+      const picker = item.querySelector(".color-menu-picker");
+      if (picker && value) picker.value = value;
     });
   }
 
   return {
-    FIELDS,
     load,
     reset,
     getColor,
     setColor,
-    buildDialog,
-    syncDialog,
+    buildPanel,
+    syncPanel,
+    closeAllMenus,
   };
 })();
