@@ -10,7 +10,12 @@
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
-  const appearanceOverlay = document.getElementById("appearance-overlay");
+  const appearancePanel = document.getElementById("appearance-panel");
+  const menuScrim = document.getElementById("menu-scrim");
+  const confirmDialog = document.getElementById("confirm-dialog");
+  const confirmMessage = document.getElementById("confirm-message");
+  const confirmOk = document.getElementById("confirm-ok");
+  const confirmCancel = document.getElementById("confirm-cancel");
   const settingsColors = document.getElementById("settings-colors");
   const btnSettings = document.getElementById("btn-settings");
   const btnMenu = document.getElementById("btn-menu");
@@ -50,6 +55,7 @@
   let seedHistory = [];
   let settingsOpen = false;
   let menuOpen = false;
+  let confirmCallback = null;
 
   function emptyNotes() {
     return Array.from({ length: 9 }, () =>
@@ -165,6 +171,8 @@
     if (!menuOpen) return;
     menuOpen = false;
     navMenu.hidden = true;
+    menuScrim.hidden = true;
+    menuScrim.setAttribute("aria-hidden", "true");
     btnMenu.classList.remove("active");
     btnMenu.setAttribute("aria-expanded", "false");
   }
@@ -177,6 +185,8 @@
     closeSettings();
     menuOpen = true;
     navMenu.hidden = false;
+    menuScrim.hidden = false;
+    menuScrim.setAttribute("aria-hidden", "false");
     btnMenu.classList.add("active");
     btnMenu.setAttribute("aria-expanded", "true");
   }
@@ -184,9 +194,20 @@
   function closeSettings() {
     if (!settingsOpen) return;
     settingsOpen = false;
-    appearanceOverlay.hidden = true;
+    appearancePanel.hidden = true;
     btnSettings.classList.remove("active");
     Settings.closeAllMenus();
+  }
+
+  function showConfirm(message, onConfirm) {
+    confirmMessage.textContent = message;
+    confirmCallback = onConfirm;
+    confirmDialog.showModal();
+  }
+
+  function closeConfirm() {
+    confirmCallback = null;
+    confirmDialog.close();
   }
 
   function setZen(enabled) {
@@ -643,6 +664,7 @@
   function restartGame() {
     if (!puzzle.length) return;
 
+    closeMenu();
     gameWon = false;
     selected = null;
     activeNumber = null;
@@ -763,6 +785,7 @@
   }
 
   function newGame() {
+    closeMenu();
     gameWon = false;
     selected = null;
     activeNumber = null;
@@ -822,7 +845,7 @@
     }
     closeMenu();
     settingsOpen = true;
-    appearanceOverlay.hidden = false;
+    appearancePanel.hidden = false;
     btnSettings.classList.add("active");
     if (!settingsColors.childElementCount) {
       Settings.buildPanel(settingsColors);
@@ -908,8 +931,23 @@
   document.getElementById("btn-check").addEventListener("click", checkSolution);
   document.getElementById("btn-erase").addEventListener("click", eraseCell);
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
-  document.getElementById("btn-pencil-fill").addEventListener("click", fillAllPencil);
-  document.getElementById("btn-pencil-clear").addEventListener("click", clearAllPencil);
+  document.getElementById("btn-pencil-fill").addEventListener("click", () => {
+    showConfirm("Fill every empty cell with valid pencil marks?", () => fillAllPencil());
+  });
+  document.getElementById("btn-pencil-clear").addEventListener("click", () => {
+    showConfirm("Clear all pencil marks from the board?", () => clearAllPencil());
+  });
+  confirmOk.addEventListener("click", () => {
+    const action = confirmCallback;
+    closeConfirm();
+    if (action) action();
+  });
+  confirmCancel.addEventListener("click", closeConfirm);
+  confirmDialog.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    closeConfirm();
+  });
+  menuScrim.addEventListener("click", closeMenu);
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);
@@ -923,7 +961,13 @@
     if (e.target === seedsDialog) seedsDialog.close();
   });
   document.addEventListener("click", (e) => {
-    if (menuOpen && !e.target.closest(".header")) closeMenu();
+    if (
+      menuOpen &&
+      !e.target.closest("#nav-menu") &&
+      !e.target.closest("#btn-menu")
+    ) {
+      closeMenu();
+    }
   });
   document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
