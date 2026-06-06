@@ -545,6 +545,93 @@
     saveGame();
   }
 
+  function notesDiffer(a, b) {
+    if (a.size !== b.size) return true;
+    for (const n of a) {
+      if (!b.has(n)) return true;
+    }
+    return false;
+  }
+
+  function fillAllPencil() {
+    if (gameWon) return;
+
+    const nextNotes = emptyNotes();
+    let changed = false;
+
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (given[r][c] || puzzle[r][c] !== 0) continue;
+        for (let n = 1; n <= 9; n++) {
+          if (Sudoku.isValid(puzzle, r, c, n)) nextNotes[r][c].add(n);
+        }
+        if (notesDiffer(notes[r][c], nextNotes[r][c])) changed = true;
+      }
+    }
+
+    if (!changed) return;
+
+    pushHistory();
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (!given[r][c] && puzzle[r][c] === 0) {
+          notes[r][c] = new Set(nextNotes[r][c]);
+        }
+      }
+    }
+
+    clearErrors();
+    renderBoard();
+    saveGame();
+  }
+
+  function clearAllPencil() {
+    if (gameWon) return;
+
+    let changed = false;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (notes[r][c].size) changed = true;
+      }
+    }
+    if (!changed) return;
+
+    pushHistory();
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        notes[r][c].clear();
+      }
+    }
+
+    clearErrors();
+    renderBoard();
+    saveGame();
+  }
+
+  function restartGame() {
+    if (!puzzle.length) return;
+
+    gameWon = false;
+    selected = null;
+    activeNumber = null;
+    history = [];
+    future = [];
+
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (!given[r][c]) puzzle[r][c] = 0;
+      }
+    }
+
+    notes = emptyNotes();
+    clearErrors();
+    setStatus("");
+    renderBoard();
+    startTimer(0);
+    updateUndoRedo();
+    saveGame();
+  }
+
   function showErrors(errorSet) {
     errorSet.forEach((key) => {
       const [r, c] = key.split(",").map(Number);
@@ -785,9 +872,12 @@
     saveGame();
   });
   document.getElementById("btn-new").addEventListener("click", newGame);
+  document.getElementById("btn-restart").addEventListener("click", restartGame);
   document.getElementById("btn-check").addEventListener("click", checkSolution);
   document.getElementById("btn-erase").addEventListener("click", eraseCell);
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
+  document.getElementById("btn-pencil-fill").addEventListener("click", fillAllPencil);
+  document.getElementById("btn-pencil-clear").addEventListener("click", clearAllPencil);
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
   btnSettings.addEventListener("click", toggleSettings);
