@@ -4,12 +4,14 @@
   const statusEl = document.getElementById("status");
   const timerEl = document.getElementById("timer");
   const difficultyEl = document.getElementById("difficulty");
-  const themeToggle = document.getElementById("theme-toggle");
+  const themeSelect = document.getElementById("theme-select");
   const appEl = document.querySelector(".app");
   const lessonsDialog = document.getElementById("lessons-dialog");
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
   const seedsDialog = document.getElementById("seeds-dialog");
+  const settingsDialog = document.getElementById("settings-dialog");
+  const settingsColors = document.getElementById("settings-colors");
   const seedList = document.getElementById("seed-list");
   const currentSeedEl = document.getElementById("current-seed");
 
@@ -21,8 +23,8 @@
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
   const MAX_SEEDS = 10;
-  const THEMES = ["light", "dark", "ocean", "dusk"];
-  const THEME_LABELS = { light: "Light", dark: "Dark", ocean: "Ocean", dusk: "Dusk" };
+  const THEMES = ["dark", "light", "slate", "ocean", "dusk"];
+  const DEFAULT_THEME = "dark";
 
   let puzzle = [];
   let solution = [];
@@ -107,16 +109,18 @@
   }
 
   function setTheme(theme) {
-    if (!THEMES.includes(theme)) theme = "light";
+    if (!THEMES.includes(theme)) theme = DEFAULT_THEME;
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("sudoku-theme", theme);
-    themeToggle.title = `Theme: ${THEME_LABELS[theme]}`;
+    if (themeSelect) themeSelect.value = theme;
   }
 
-  function cycleTheme() {
-    const current = document.documentElement.getAttribute("data-theme") || "light";
-    const idx = THEMES.indexOf(current);
-    setTheme(THEMES[(idx + 1) % THEMES.length]);
+  function resetAppearance() {
+    Settings.reset();
+    setTheme(DEFAULT_THEME);
+    if (settingsColors.childElementCount) {
+      Settings.syncDialog(settingsColors);
+    }
     saveGame();
   }
 
@@ -129,14 +133,9 @@
 
   function initPreferences() {
     const savedTheme = localStorage.getItem("sudoku-theme");
-    if (THEMES.includes(savedTheme)) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    } else {
-      setTheme("light");
-    }
+    setTheme(THEMES.includes(savedTheme) ? savedTheme : DEFAULT_THEME);
     setZen(localStorage.getItem("sudoku-zen") === "1");
+    Settings.load();
   }
 
   function formatTime(s) {
@@ -645,6 +644,15 @@
     lessonsDialog.showModal();
   }
 
+  function openSettings() {
+    if (!settingsColors.childElementCount) {
+      Settings.buildDialog(settingsColors);
+    } else {
+      Settings.syncDialog(settingsColors);
+    }
+    settingsDialog.showModal();
+  }
+
   function handleKeydown(e) {
     if (e.ctrlKey || e.metaKey) {
       if (e.key === "z" && !e.shiftKey) {
@@ -704,7 +712,10 @@
     selectCell(nr, nc);
   }
 
-  themeToggle.addEventListener("click", cycleTheme);
+  themeSelect.addEventListener("change", () => {
+    setTheme(themeSelect.value);
+    saveGame();
+  });
   btnZen.addEventListener("click", () => {
     setZen(!zenMode);
     saveGame();
@@ -715,14 +726,20 @@
   document.getElementById("btn-pencil").addEventListener("click", togglePencil);
   document.getElementById("btn-lessons").addEventListener("click", openLessons);
   document.getElementById("btn-seeds").addEventListener("click", openSeeds);
+  document.getElementById("btn-settings").addEventListener("click", openSettings);
   document.getElementById("lessons-close").addEventListener("click", () => lessonsDialog.close());
   document.getElementById("seeds-close").addEventListener("click", () => seedsDialog.close());
+  document.getElementById("settings-close").addEventListener("click", () => settingsDialog.close());
   lessonsDialog.addEventListener("click", (e) => {
     if (e.target === lessonsDialog) lessonsDialog.close();
   });
   seedsDialog.addEventListener("click", (e) => {
     if (e.target === seedsDialog) seedsDialog.close();
   });
+  settingsDialog.addEventListener("click", (e) => {
+    if (e.target === settingsDialog) settingsDialog.close();
+  });
+  document.addEventListener("sudoku:reset-appearance", resetAppearance);
   document.querySelectorAll(".dialog-tabs .tab").forEach((tab) => {
     tab.addEventListener("click", () => switchLessonTab(tab.dataset.tab));
   });

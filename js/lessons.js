@@ -5,7 +5,7 @@ const LessonsBasics = [
   },
   {
     title: "How puzzles are made",
-    body: "Every game is procedurally generated from a seed (open the # icon at the bottom). The same seed and difficulty always produces the same puzzle, so you can save or share seeds to replay or track games.",
+    body: "Every game is procedurally generated from a seed (key icon in the header). The same seed and difficulty always produces the same puzzle, so you can save or share seeds to replay or track games.",
   },
   {
     title: "Start with certainties",
