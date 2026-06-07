@@ -424,7 +424,7 @@
 /* Characters — larger relative to tile */
 .mj-chars-text {
   font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(0.7rem, 42%, 1.35rem);
+  font-size: clamp(0.85rem, 54%, 1.75rem);
   color: var(--mj-chars-color);
   letter-spacing: -0.02em;
   font-weight: 800;
@@ -433,14 +433,14 @@
 
 /* Winds */
 .mj-wind-text {
-  font-size: clamp(0.85rem, 58%, 1.65rem);
+  font-size: clamp(0.95rem, 72%, 2rem);
   color: var(--mj-wind-color);
   font-weight: 800;
 }
 
 /* Dragons */
 .mj-dragon-text {
-  font-size: clamp(0.85rem, 58%, 1.65rem);
+  font-size: clamp(0.95rem, 72%, 2rem);
   font-weight: 800;
 }
 
@@ -456,8 +456,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.1em;
-  min-height: 1.1em;
+  min-width: 1.15em;
+  min-height: 1.15em;
+  font-size: 0.92em;
   color: var(--mj-white-color);
   border: 2px solid var(--mj-white-border);
   font-weight: 800;
@@ -466,7 +467,7 @@
 
 /* Flowers & seasons */
 .mj-bonus-text {
-  font-size: clamp(0.8rem, 54%, 1.5rem);
+  font-size: clamp(0.9rem, 66%, 1.85rem);
   font-weight: 800;
 }
 
@@ -502,6 +503,72 @@
   background: #232328;
   border-color: #48484f;
   box-shadow: 1px 2px 0 #101012;
+}
+
+.mj-atlas-intro {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.mj-atlas-section .mj-atlas-rule {
+  margin: 0 0 0.625rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.mj-atlas-section .mj-atlas-english {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.mj-atlas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  gap: 0.5rem 0.375rem;
+  margin-bottom: 0.25rem;
+}
+
+.mj-atlas-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.mj-atlas-entry .mj-guide-tile {
+  width: 2.85rem;
+  height: 3.65rem;
+}
+
+.mj-atlas-entry .mj-chars-text,
+.mj-atlas-entry .mj-wind-text,
+.mj-atlas-entry .mj-dragon-text,
+.mj-atlas-entry .mj-bonus-text {
+  font-size: 0.8rem;
+}
+
+.mj-atlas-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mj-atlas-chinese {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.mj-atlas-label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  line-height: 1.25;
 }
 
 .mahjong-actions {

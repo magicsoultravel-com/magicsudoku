@@ -15,7 +15,7 @@
   const dealProgress = document.getElementById("mahjong-deal-progress");
   const guideDialog = document.getElementById("mahjong-guide-dialog");
   const guideBasics = document.getElementById("mahjong-guide-basics");
-  const guideSymbols = document.getElementById("mahjong-guide-symbols");
+  const guideAtlas = document.getElementById("mahjong-guide-atlas");
   const btnTileSet = document.getElementById("btn-mahjong-tiles");
   const appEl = document.querySelector(".app");
   const seedsDialog = document.getElementById("seeds-dialog");
@@ -432,6 +432,23 @@
     return face;
   }
 
+  function tileTooltip(tile, free) {
+    const meta = MahjongTileMeta.get(`${tile.kind}:${tile.rank}`);
+    if (!meta) {
+      return free ? `Match ${tile.label}` : "Blocked tile";
+    }
+
+    let text = `${meta.chinese} (${meta.pronunciation}) — ${meta.english}`;
+    if (!free) {
+      text += " — Blocked";
+    } else if (meta.group === "flower") {
+      text += " — matches any flower";
+    } else if (meta.group === "season") {
+      text += " — matches any season";
+    }
+    return text;
+  }
+
   function renderBoard(animateIn = false) {
     if (!boardEl || !tiles.length) return;
     boardEl.innerHTML = "";
@@ -480,7 +497,9 @@
         enterIndex++;
       }
 
-      btn.title = free ? `Match ${tile.label}` : "Blocked tile";
+      const tip = tileTooltip(tile, free);
+      btn.title = tip;
+      btn.setAttribute("aria-label", tip);
       btn.disabled = (!free && selected !== tile.id) || animating;
       btn.addEventListener("click", () => onTileClick(tile.id));
       boardEl.appendChild(btn);
@@ -756,7 +775,7 @@
     dealBoard({ dealSeed: seed ?? Date.now(), recordStart: false });
   }
 
-  function fillGuidePanel(container, lessons, withSamples = false) {
+  function fillGuidePanel(container, lessons) {
     container.innerHTML = "";
     lessons.forEach((lesson) => {
       const article = document.createElement("article");
@@ -766,42 +785,90 @@
       heading.textContent = lesson.title;
       article.appendChild(heading);
 
-      if (lesson.pronunciation) {
-        const sectionPron = document.createElement("p");
-        sectionPron.className = "mj-guide-pron";
-        sectionPron.textContent = lesson.pronunciation;
-        article.appendChild(sectionPron);
-      }
-
       const body = document.createElement("p");
       body.textContent = lesson.body;
       article.appendChild(body);
 
-      if (withSamples && lesson.samples?.length) {
-        const row = document.createElement("div");
-        row.className = "mj-guide-samples";
-        row.setAttribute("aria-hidden", "true");
-        for (const sample of lesson.samples) {
-          const sampleWrap = document.createElement("div");
-          sampleWrap.className = "mj-guide-sample";
+      container.appendChild(article);
+    });
+  }
 
-          const tileEl = document.createElement("span");
-          tileEl.className = `mj-guide-tile mj-${sample.kind}`;
-          tileEl.appendChild(createTileFace(sample));
-          sampleWrap.appendChild(tileEl);
+  function fillAtlasPanel(container, sections) {
+    container.innerHTML = "";
 
-          if (sample.pronunciation) {
-            const pron = document.createElement("span");
-            pron.className = "mj-guide-pron";
-            pron.textContent = sample.pronunciation;
-            sampleWrap.appendChild(pron);
-          }
+    const intro = document.createElement("p");
+    intro.className = "mj-atlas-intro";
+    intro.textContent =
+      "Every unique tile on the board — Chinese name, pronunciation (pinyin), and English meaning. Suits need an exact match; flowers and seasons match within their group.";
+    container.appendChild(intro);
 
-          row.appendChild(sampleWrap);
-        }
-        article.appendChild(row);
+    sections.forEach((section) => {
+      const article = document.createElement("article");
+      article.className = "lesson mj-atlas-section";
+
+      const heading = document.createElement("h3");
+      heading.textContent = section.title;
+      article.appendChild(heading);
+
+      if (section.pronunciation) {
+        const sectionPron = document.createElement("p");
+        sectionPron.className = "mj-guide-pron";
+        sectionPron.textContent = section.pronunciation;
+        article.appendChild(sectionPron);
       }
 
+      if (section.english) {
+        const sectionEn = document.createElement("p");
+        sectionEn.className = "mj-atlas-english";
+        sectionEn.textContent = section.english;
+        article.appendChild(sectionEn);
+      }
+
+      const rule = document.createElement("p");
+      rule.className = "mj-atlas-rule";
+      rule.textContent = section.rule;
+      article.appendChild(rule);
+
+      const grid = document.createElement("div");
+      grid.className = "mj-atlas-grid";
+      grid.setAttribute("aria-hidden", "true");
+
+      for (const tile of section.tiles) {
+        const entry = document.createElement("div");
+        entry.className = "mj-atlas-entry";
+
+        const tileEl = document.createElement("span");
+        tileEl.className = `mj-guide-tile mj-${tile.kind}`;
+        tileEl.appendChild(createTileFace(tile));
+        entry.appendChild(tileEl);
+
+        const meta = document.createElement("div");
+        meta.className = "mj-atlas-meta";
+
+        const chinese = document.createElement("span");
+        chinese.className = "mj-atlas-chinese";
+        chinese.textContent = tile.chinese || tile.label;
+        meta.appendChild(chinese);
+
+        if (tile.pronunciation) {
+          const pron = document.createElement("span");
+          pron.className = "mj-guide-pron";
+          pron.textContent = tile.pronunciation;
+          meta.appendChild(pron);
+        }
+
+        if (tile.english) {
+          const label = document.createElement("span");
+          label.className = "mj-atlas-label";
+          label.textContent = tile.english;
+          meta.appendChild(label);
+        }
+
+        entry.appendChild(meta);
+        grid.appendChild(entry);
+      }
+
+      article.appendChild(grid);
       container.appendChild(article);
     });
   }
@@ -809,18 +876,18 @@
   function switchGuideTab(tab) {
     const isBasics = tab === "basics";
     document.getElementById("tab-mj-basics")?.classList.toggle("active", isBasics);
-    document.getElementById("tab-mj-symbols")?.classList.toggle("active", !isBasics);
+    document.getElementById("tab-mj-atlas")?.classList.toggle("active", !isBasics);
     document.getElementById("tab-mj-basics")?.setAttribute("aria-selected", String(isBasics));
-    document.getElementById("tab-mj-symbols")?.setAttribute("aria-selected", String(!isBasics));
+    document.getElementById("tab-mj-atlas")?.setAttribute("aria-selected", String(!isBasics));
     if (guideBasics) guideBasics.hidden = !isBasics;
-    if (guideSymbols) guideSymbols.hidden = isBasics;
+    if (guideAtlas) guideAtlas.hidden = isBasics;
   }
 
   function openGuide() {
     window.SudokuApp?.closeMenu?.();
     if (guideBasics) {
       fillGuidePanel(guideBasics, MahjongGuideBasics);
-      fillGuidePanel(guideSymbols, MahjongGuideSymbols, true);
+      fillAtlasPanel(guideAtlas, MahjongGuideAtlas);
     }
     switchGuideTab("basics");
     guideDialog?.showModal();
@@ -846,7 +913,7 @@
       if (e.target === guideDialog) guideDialog.close();
     });
     document.getElementById("tab-mj-basics")?.addEventListener("click", () => switchGuideTab("basics"));
-    document.getElementById("tab-mj-symbols")?.addEventListener("click", () => switchGuideTab("symbols"));
+    document.getElementById("tab-mj-atlas")?.addEventListener("click", () => switchGuideTab("atlas"));
 
     try {
       if (!tryLoadGame()) {
