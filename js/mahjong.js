@@ -292,6 +292,70 @@ const Mahjong = (() => {
     }));
   }
 
+  function tick() {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  async function generateAsync(seed = Date.now(), onProgress) {
+    const report = (p, label) => {
+      if (typeof onProgress === "function") onProgress(Math.min(1, Math.max(0, p)), label);
+    };
+
+    report(0.04, "Preparing deck…");
+    await tick();
+
+    const count = LAYOUT.length;
+    const fallbackSeed = (seed ^ 0x9e3779b9) >>> 0;
+
+    try {
+      if (count % 2 !== 0 || buildDeck().length !== count) {
+        report(1, "Done");
+        return {
+          tiles: dealShuffled(fallbackSeed),
+          seed: fallbackSeed,
+          layout: LAYOUT,
+          solvable: false,
+        };
+      }
+
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if (attempt % 3 === 0) {
+          report(0.1 + (attempt / 100) * 0.7, "Dealing tiles…");
+          await tick();
+        }
+        const trySeed = (seed + attempt * 7919) >>> 0;
+        const tiles = dealGreedy(trySeed);
+        if (tiles) {
+          report(1, "Ready");
+          return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
+        }
+      }
+
+      for (let attempt = 0; attempt < 6; attempt++) {
+        report(0.82 + attempt * 0.025, "Finding solvable layout…");
+        await tick();
+        const trySeed = (seed + attempt * 99991) >>> 0;
+        const tiles = dealSolvable(trySeed);
+        if (tiles) {
+          report(1, "Ready");
+          return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
+        }
+      }
+    } catch (err) {
+      console.warn("Mahjong deal failed, using shuffled fallback", err);
+    }
+
+    report(0.94, "Finishing…");
+    await tick();
+    report(1, "Ready");
+    return {
+      tiles: dealShuffled(fallbackSeed),
+      seed: fallbackSeed,
+      layout: LAYOUT,
+      solvable: false,
+    };
+  }
+
   function generate(seed = Date.now()) {
     const count = LAYOUT.length;
     const fallbackSeed = (seed ^ 0x9e3779b9) >>> 0;
@@ -371,6 +435,7 @@ const Mahjong = (() => {
     LAYOUT,
     TILE_COUNT: LAYOUT.length,
     generate,
+    generateAsync,
     isFree,
     canMatch,
     remaining,

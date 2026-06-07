@@ -1493,5 +1493,5 @@
 
   boot();
 
-  window.SudokuApp = { saveGame };
+  window.SudokuApp = { saveGame, closeMenu };
 })();

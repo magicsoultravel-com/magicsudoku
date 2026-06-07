@@ -9,6 +9,13 @@
   const btnUndo = document.getElementById("btn-mahjong-undo");
   const btnHint = document.getElementById("btn-mahjong-hint");
   const difficultyEl = document.getElementById("mahjong-difficulty");
+  const dealOverlay = document.getElementById("mahjong-deal-overlay");
+  const dealBar = document.getElementById("mahjong-deal-bar");
+  const dealLabel = document.getElementById("mahjong-deal-label");
+  const dealProgress = document.getElementById("mahjong-deal-progress");
+  const guideDialog = document.getElementById("mahjong-guide-dialog");
+  const guideBasics = document.getElementById("mahjong-guide-basics");
+  const guideSymbols = document.getElementById("mahjong-guide-symbols");
 
   const STATE_KEY = "mahjong-game";
   const STATS_KEY = "mahjong-stats";
@@ -29,6 +36,11 @@
   let gamesCompleted = 0;
   let initialized = false;
   let animating = false;
+  let dealToken = 0;
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   function formatTime(s) {
     const m = Math.floor(s / 60);
@@ -318,7 +330,7 @@
     return face;
   }
 
-  function renderBoard() {
+  function renderBoard(animateIn = false) {
     if (!boardEl || !tiles.length) return;
     boardEl.innerHTML = "";
     const bounds = Mahjong.bounds(tiles);
@@ -342,6 +354,7 @@
       .filter((t) => !t.removed)
       .sort((a, b) => a.z - b.z || a.y - b.y || a.x - b.x);
 
+    let enterIndex = 0;
     for (const tile of sorted) {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -358,6 +371,12 @@
       btn.classList.add(`mj-${tile.kind}`);
 
       btn.appendChild(createTileFace(tile));
+
+      if (animateIn) {
+        btn.classList.add("mj-enter");
+        btn.style.animationDelay = `${enterIndex * 10}ms`;
+        enterIndex++;
+      }
 
       btn.title = free ? `Match ${tile.label}` : "Blocked tile";
       btn.disabled = (!free && selected !== tile.id) || animating;
@@ -496,64 +515,139 @@
     saveGame();
   }
 
-  function newGame() {
+  function setDealProgress(p, label) {
+    const pct = Math.round(p * 100);
+    if (dealBar) dealBar.style.width = `${pct}%`;
+    dealProgress?.setAttribute("aria-valuenow", String(pct));
+    if (label && dealLabel) dealLabel.textContent = label;
+  }
+
+  function hideDealOverlay() {
+    if (!dealOverlay) return;
+    dealOverlay.hidden = true;
+    dealOverlay.setAttribute("aria-hidden", "true");
+    setDealProgress(0, "Dealing tiles…");
+  }
+
+  function showDealOverlay() {
+    if (!dealOverlay) return;
+    setDealProgress(0, "Dealing tiles…");
+    dealOverlay.hidden = false;
+    dealOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  async function dealBoard({ dealSeed, recordStart = false } = {}) {
+    const token = ++dealToken;
+
     gameWon = false;
     selected = null;
     history = [];
     animating = false;
     setStatus("");
 
+    boardWrap.classList.add("is-clearing");
+    await wait(240);
+    if (token !== dealToken) return;
+
+    showDealOverlay();
+    boardWrap.classList.add("is-dealing");
+
+    let result;
+    try {
+      result = await Mahjong.generateAsync(dealSeed, (p, label) => {
+        if (token === dealToken) setDealProgress(p, label);
+      });
+    } catch (err) {
+      console.error(err);
+      if (token !== dealToken) return;
+      setStatus("Could not deal board — try New game again", "err");
+      boardWrap.classList.remove("is-clearing", "is-dealing");
+      hideDealOverlay();
+      return;
+    }
+
+    if (token !== dealToken) return;
+
+    tiles = result.tiles;
+    seed = result.seed;
+    if (recordStart) recordGameStarted();
+
+    setDealProgress(1, "Ready");
+    await wait(160);
+    if (token !== dealToken) return;
+
+    boardWrap.classList.remove("is-dealing");
+    renderBoard(true);
+
+    if (!result.solvable) {
+      setStatus("Board dealt — use Hint if you get stuck", "err");
+    }
+
+    await wait(120);
+    if (token !== dealToken) return;
+
+    hideDealOverlay();
+    boardWrap.classList.remove("is-clearing");
+    resetTimer();
+    btnUndo.disabled = true;
+    saveGame();
+  }
+
+  function newGame() {
     const diff = difficultyEl?.value || "medium";
     const seedBase = Date.now() ^ (Math.random() * 0xffffffff);
     const offset = diff === "easy" ? 0 : diff === "hard" ? 999983 : 424242;
-    seed = (seedBase + offset) >>> 0;
-
-    boardWrap.classList.add("is-clearing");
-    setTimeout(() => {
-      try {
-        const result = Mahjong.generate(seed);
-        tiles = result.tiles;
-        seed = result.seed;
-        recordGameStarted();
-        renderBoard();
-        if (!result.solvable) {
-          setStatus("Board dealt — use Hint if you get stuck", "err");
-        }
-      } catch (err) {
-        console.error(err);
-        setStatus("Could not deal board — try New game again", "err");
-      }
-      boardWrap.classList.remove("is-clearing");
-      resetTimer();
-      btnUndo.disabled = true;
-      saveGame();
-    }, 220);
+    const dealSeed = (seedBase + offset) >>> 0;
+    dealBoard({ dealSeed, recordStart: true });
   }
 
   function restartGame() {
-    if (!tiles.length) return;
-    gameWon = false;
-    selected = null;
-    history = [];
-    animating = false;
-    setStatus("");
+    if (!tiles.length && seed == null) return;
+    dealBoard({ dealSeed: seed ?? Date.now(), recordStart: false });
+  }
 
-    boardWrap.classList.add("is-clearing");
-    setTimeout(() => {
-      try {
-        const result = Mahjong.generate(seed ?? Date.now());
-        tiles = result.tiles;
-        seed = result.seed;
-        renderBoard();
-      } catch (err) {
-        console.error(err);
-        setStatus("Could not deal board — try New game again", "err");
+  function fillGuidePanel(container, lessons, withSamples = false) {
+    container.innerHTML = "";
+    lessons.forEach((lesson) => {
+      const article = document.createElement("article");
+      article.className = "lesson";
+      article.innerHTML = `<h3>${lesson.title}</h3><p>${lesson.body}</p>`;
+
+      if (withSamples && lesson.samples?.length) {
+        const row = document.createElement("div");
+        row.className = "mj-guide-samples";
+        row.setAttribute("aria-hidden", "true");
+        for (const sample of lesson.samples) {
+          const tileEl = document.createElement("span");
+          tileEl.className = `mj-guide-tile mj-${sample.kind}`;
+          tileEl.appendChild(createTileFace(sample));
+          row.appendChild(tileEl);
+        }
+        article.appendChild(row);
       }
-      boardWrap.classList.remove("is-clearing");
-      resetTimer();
-      btnUndo.disabled = true;
-      saveGame();
-    }, 220);
+
+      container.appendChild(article);
+    });
+  }
+
+  function switchGuideTab(tab) {
+    const isBasics = tab === "basics";
+    document.getElementById("tab-mj-basics")?.classList.toggle("active", isBasics);
+    document.getElementById("tab-mj-symbols")?.classList.toggle("active", !isBasics);
+    document.getElementById("tab-mj-basics")?.setAttribute("aria-selected", String(isBasics));
+    document.getElementById("tab-mj-symbols")?.setAttribute("aria-selected", String(!isBasics));
+    if (guideBasics) guideBasics.hidden = !isBasics;
+    if (guideSymbols) guideSymbols.hidden = isBasics;
+  }
+
+  function openGuide() {
+    window.SudokuApp?.closeMenu?.();
+    if (guideBasics && !guideBasics.childElementCount) {
+      fillGuidePanel(guideBasics, MahjongGuideBasics);
+      fillGuidePanel(guideSymbols, MahjongGuideSymbols, true);
+    }
+    switchGuideTab("basics");
+    guideDialog?.showModal();
   }
 
   function init() {
@@ -566,6 +660,13 @@
 
     document.getElementById("btn-mahjong-new")?.addEventListener("click", newGame);
     document.getElementById("btn-mahjong-restart")?.addEventListener("click", restartGame);
+    document.getElementById("btn-mahjong-guide")?.addEventListener("click", openGuide);
+    document.getElementById("mahjong-guide-close")?.addEventListener("click", () => guideDialog?.close());
+    guideDialog?.addEventListener("click", (e) => {
+      if (e.target === guideDialog) guideDialog.close();
+    });
+    document.getElementById("tab-mj-basics")?.addEventListener("click", () => switchGuideTab("basics"));
+    document.getElementById("tab-mj-symbols")?.addEventListener("click", () => switchGuideTab("symbols"));
 
     try {
       if (!tryLoadGame()) {
