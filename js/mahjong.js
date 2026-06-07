@@ -163,61 +163,69 @@ const Mahjong = (() => {
     return deck;
   }
 
-  function cloneTiles(tiles) {
-    return tiles.map((t) => ({ ...t }));
-  }
-
-  function isSolvable(tiles) {
-    const state = cloneTiles(tiles);
-
-    function solved() {
-      return state.every((t) => t.removed);
+  function buildPairQueue(rand) {
+    const buckets = new Map();
+    for (const tile of buildDeck()) {
+      if (!buckets.has(tile.key)) buckets.set(tile.key, []);
+      buckets.get(tile.key).push(tile);
     }
-
-    function backtrack() {
-      if (solved()) return true;
-
-      const free = freeTiles(state);
-      if (!free.length) return false;
-
-      for (let i = 0; i < free.length; i++) {
-        for (let j = i + 1; j < free.length; j++) {
-          if (!canMatch(free[i], free[j])) continue;
-
-          const a = state.find((t) => t.id === free[i].id);
-          const b = state.find((t) => t.id === free[j].id);
-          a.removed = true;
-          b.removed = true;
-
-          if (backtrack()) return true;
-
-          a.removed = false;
-          b.removed = false;
-        }
+    const pairs = [];
+    for (const group of buckets.values()) {
+      for (let i = 0; i < group.length; i += 2) {
+        pairs.push([group[i], group[i + 1]]);
       }
-      return false;
     }
-
-    return backtrack();
+    return shuffle(pairs, rand);
   }
 
-  function generateOnce(seed) {
-    const count = LAYOUT.length;
-    const deck = buildDeck();
-    const rand = mulberry32(seed);
-    const shuffled = shuffle([...deck], rand);
+  function isSlotFree(slotId, placed, pos) {
+    const temp = { id: slotId, x: pos.x, y: pos.y, z: pos.z, removed: false };
+    return isFree(temp, placed);
+  }
 
-    return LAYOUT.map((pos, i) => ({
-      id: i,
-      kind: shuffled[i].kind,
-      rank: shuffled[i].rank,
-      label: shuffled[i].label,
-      key: shuffled[i].key,
-      z: pos.z,
-      x: pos.x,
-      y: pos.y,
-      removed: false,
-    }));
+  /** Reverse-deal: place pairs on free slots — fast and always solvable. */
+  function dealSolvable(seed) {
+    const rand = mulberry32(seed);
+    const pairs = buildPairQueue(rand);
+    const unplaced = new Set(LAYOUT.map((_, i) => i));
+    const placed = [];
+    const byId = new Map();
+
+    for (const [tileA, tileB] of pairs) {
+      const freeSlots = [...unplaced].filter((id) => isSlotFree(id, placed, LAYOUT[id]));
+      if (freeSlots.length < 2) return null;
+
+      const i1 = Math.floor(rand() * freeSlots.length);
+      const s1 = freeSlots[i1];
+      freeSlots.splice(i1, 1);
+      const s2 = freeSlots[Math.floor(rand() * freeSlots.length)];
+
+      for (const [slotId, def] of [
+        [s1, tileA],
+        [s2, tileB],
+      ]) {
+        const pos = LAYOUT[slotId];
+        const tile = {
+          id: slotId,
+          kind: def.kind,
+          rank: def.rank,
+          label: def.label,
+          key: def.key,
+          z: pos.z,
+          x: pos.x,
+          y: pos.y,
+          removed: false,
+        };
+        placed.push(tile);
+        byId.set(slotId, tile);
+        unplaced.delete(slotId);
+      }
+    }
+
+    if (unplaced.size > 0) return null;
+
+    const tiles = LAYOUT.map((_, i) => byId.get(i));
+    return tiles;
   }
 
   function generate(seed = Date.now()) {
@@ -226,22 +234,26 @@ const Mahjong = (() => {
       throw new Error("Layout must have an even number of positions");
     }
 
-    const deck = buildDeck();
-    if (deck.length !== count) {
-      throw new Error(`Deck size ${deck.length} does not match layout ${count}`);
+    if (buildDeck().length !== count) {
+      throw new Error(`Deck size mismatch for layout ${count}`);
     }
 
-    const maxAttempts = 80;
+    const maxAttempts = 24;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const trySeed = (seed + attempt) >>> 0;
-      const tiles = generateOnce(trySeed);
-      if (isSolvable(tiles)) {
-        return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
+      const tiles = dealSolvable(trySeed);
+      if (tiles) {
+        return { tiles, seed: trySeed, layout: LAYOUT };
       }
     }
 
-    const tiles = generateOnce(seed);
-    return { tiles, seed, layout: LAYOUT, solvable: false };
+    for (let extra = 0; extra < 20; extra++) {
+      const trySeed = (seed ^ ((extra + 1) * 2654435761)) >>> 0;
+      const tiles = dealSolvable(trySeed);
+      if (tiles) return { tiles, seed: trySeed, layout: LAYOUT };
+    }
+
+    throw new Error("Failed to deal a mahjong board");
   }
 
   function remaining(tiles) {
@@ -282,7 +294,6 @@ const Mahjong = (() => {
     LAYOUT,
     TILE_COUNT: LAYOUT.length,
     generate,
-    isSolvable,
     isFree,
     canMatch,
     remaining,

@@ -447,7 +447,6 @@
       seed = result.seed;
       recordGameStarted();
       renderBoard();
-      if (!result.solvable) setStatus("Puzzle may be unsolvable — try New game", "err");
       boardWrap.classList.remove("is-clearing");
       resetTimer();
       btnUndo.disabled = true;
