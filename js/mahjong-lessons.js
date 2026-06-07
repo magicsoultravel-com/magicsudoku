@@ -127,6 +127,8 @@ const MahjongGuideAtlas = [
 ];
 
 const MahjongTileMeta = new Map();
+const MahjongGroupPeers = { flower: [], season: [] };
+
 for (const section of MahjongGuideAtlas) {
   for (const tile of section.tiles) {
     MahjongTileMeta.set(`${tile.kind}:${tile.rank}`, {
@@ -135,5 +137,20 @@ for (const section of MahjongGuideAtlas) {
       english: tile.english,
       group: tile.kind === "flower" || tile.kind === "season" ? tile.kind : null,
     });
+    if (tile.kind === "flower" || tile.kind === "season") {
+      MahjongGroupPeers[tile.kind].push(tile);
+    }
   }
+}
+
+function mahjongMatchPeers(kind, rank) {
+  const list = MahjongGroupPeers[kind];
+  if (!list) return [];
+  return list.filter((t) => t.rank !== rank);
+}
+
+function formatMahjongMatchPeers(peers) {
+  return peers
+    .map((p) => `${p.chinese} (${p.pronunciation}) — ${p.english}`)
+    .join("; ");
 }

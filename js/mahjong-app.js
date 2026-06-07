@@ -439,13 +439,18 @@
     }
 
     let text = `${meta.chinese} (${meta.pronunciation}) — ${meta.english}`;
+
+    if (meta.group) {
+      const peers = mahjongMatchPeers(tile.kind, tile.rank);
+      if (peers.length) {
+        text += ` — Also matches: ${formatMahjongMatchPeers(peers)}`;
+      }
+    }
+
     if (!free) {
       text += " — Blocked";
-    } else if (meta.group === "flower") {
-      text += " — matches any flower";
-    } else if (meta.group === "season") {
-      text += " — matches any season";
     }
+
     return text;
   }
 
