@@ -112,7 +112,6 @@
     quoteTextEl.textContent = quote.text;
     quoteAuthorEl.textContent = quote.attribution;
 
-    quoteProceed.hidden = true;
     quoteProceed.classList.remove("is-visible");
     quoteSplash.hidden = false;
     quoteSplash.classList.remove("is-hiding");
@@ -121,7 +120,6 @@
     quoteSplash.classList.add("is-visible");
 
     await wait(QUOTE_BUTTON_DELAY_MS);
-    quoteProceed.hidden = false;
     await wait(20);
     quoteProceed.classList.add("is-visible");
 
@@ -135,7 +133,6 @@
     await wait(QUOTE_FADE_MS);
 
     quoteSplash.hidden = true;
-    quoteProceed.hidden = true;
     quoteSplash.classList.remove("is-hiding");
     quoteSplashActive = false;
   }
