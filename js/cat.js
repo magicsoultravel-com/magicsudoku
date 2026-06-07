@@ -137,17 +137,24 @@
     return candidates[0];
   }
 
+  function glanceForHeading(heading) {
+    if (heading === 180) return 24;
+    if (heading === -90) return 22;
+    return -24;
+  }
+
   function applyBorderPosition(x, y, heading) {
     boardCat.style.left = `${x}px`;
     boardCat.style.top = `${y}px`;
     boardCat.style.setProperty("--cat-heading", `${heading}deg`);
-    boardCat.style.transform = `translate(-50%, -100%) rotate(${heading}deg)`;
+    boardCat.style.setProperty("--cat-glance", `${glanceForHeading(heading)}deg`);
+    boardCat.style.transform = `translate(-50%, calc(-100% + 1px)) rotate(${heading}deg)`;
   }
 
   function applyFreePosition(x, y, rotationDeg, feetDown) {
     boardCat.style.left = `${x}px`;
     boardCat.style.top = `${y}px`;
-    const anchor = feetDown ? "translate(-50%, -100%)" : "translate(-50%, -50%)";
+    const anchor = feetDown ? "translate(-50%, calc(-100% + 1px))" : "translate(-50%, -50%)";
     boardCat.style.transform = `${anchor} rotate(${rotationDeg}deg)`;
   }
 
