@@ -1088,6 +1088,10 @@ body {
   background: var(--board-highlight-peer, var(--highlight-peer)) !important;
 }
 
+.cell.blocked.given {
+  color: var(--board-font, var(--given));
+}
+
 .cell.blocked .note {
   color: var(--text-muted);
   opacity: 0.65;

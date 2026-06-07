@@ -571,7 +571,7 @@
     cellPicker.querySelectorAll(".cell-picker-btn").forEach((btn) => {
       const num = +btn.dataset.num;
       const blocked =
-        !pencilMode && puzzle[row][col] === 0 && !Sudoku.isValid(puzzle, row, col, num);
+        !pencilMode && !Sudoku.isValid(puzzle, row, col, num);
       btn.disabled = blocked;
       btn.classList.toggle("active", pencilMode && notes[row][col].has(num));
     });
@@ -623,7 +623,7 @@
       return;
     }
 
-    if (puzzle[row][col] === 0 && !Sudoku.isValid(puzzle, row, col, num)) return;
+    if (!Sudoku.isValid(puzzle, row, col, num)) return;
 
     placeNumber(num);
     closeCellPicker();
@@ -638,7 +638,7 @@
     if (!num) return blocked;
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
-        if (puzzle[r][c] === 0 && !Sudoku.isValid(puzzle, r, c, num)) {
+        if (!Sudoku.isValid(puzzle, r, c, num)) {
           blocked.add(`${r},${c}`);
         }
       }
@@ -757,7 +757,7 @@
       selected &&
       !gameWon &&
       !given[selected.row][selected.col] &&
-      puzzle[selected.row][selected.col] === 0
+      Sudoku.isValid(puzzle, selected.row, selected.col, num)
     ) {
       placeNumber(num);
       return;
@@ -782,14 +782,25 @@
   function selectCell(row, col) {
     if (gameWon) return;
 
-    if (pencilMode && activeNumber && !given[row][col] && puzzle[row][col] === 0) {
-      selected = { row, col };
-      toggleNoteAt(row, col, activeNumber);
-      closeCellPicker();
-      return;
+    if (activeNumber !== null && !given[row][col]) {
+      if (pencilMode && puzzle[row][col] === 0) {
+        selected = { row, col };
+        toggleNoteAt(row, col, activeNumber);
+        closeCellPicker();
+        return;
+      }
+      if (!pencilMode && Sudoku.isValid(puzzle, row, col, activeNumber)) {
+        selected = { row, col };
+        placeNumber(activeNumber);
+        closeCellPicker();
+        return;
+      }
     }
 
     if (selected && selected.row === row && selected.col === col) {
+      if (cellPickerOpen && cellPickerCell?.row === row && cellPickerCell?.col === col) {
+        return;
+      }
       selected = null;
       activeNumber = null;
       closeCellPicker();
@@ -811,8 +822,7 @@
 
     closeCellPicker();
     if (!pencilMode) {
-      const val = puzzle[row][col];
-      activeNumber = val || null;
+      activeNumber = puzzle[row][col] || null;
     }
     clearErrors();
     renderBoard();
