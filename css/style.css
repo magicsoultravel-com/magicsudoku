@@ -476,7 +476,8 @@ body {
 }
 
 .app.zen .zen-hide {
-  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .main {
