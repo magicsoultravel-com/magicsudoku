@@ -1488,6 +1488,7 @@
     buildCellPicker();
     startAutoSave();
 
+    await Quotes.init();
     await showQuoteSplash();
 
     if (!tryLoadGame()) {
