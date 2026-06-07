@@ -44,6 +44,8 @@
   let initialized = false;
   let animating = false;
   let dealToken = 0;
+  let hintPair = null;
+  let hintStep = 0;
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -459,6 +461,7 @@
 
   function undo() {
     if (!history.length || gameWon || animating) return;
+    clearHint();
     const snap = history.pop();
     tiles = snap.tiles.map((t) => ({ ...t }));
     selected = snap.selected;
@@ -509,8 +512,38 @@
     }, REMOVE_MS);
   }
 
+  function clearHint() {
+    hintPair = null;
+    hintStep = 0;
+  }
+
+  function isHintPairValid(pair) {
+    if (!pair) return false;
+    const [aId, bId] = pair;
+    const a = tiles.find((t) => t.id === aId);
+    const b = tiles.find((t) => t.id === bId);
+    return (
+      a &&
+      b &&
+      !a.removed &&
+      !b.removed &&
+      Mahjong.isFree(a, tiles) &&
+      Mahjong.isFree(b, tiles) &&
+      Mahjong.canMatch(a, b)
+    );
+  }
+
+  function applyHintGlow(ids) {
+    if (!boardEl) return;
+    boardEl.querySelectorAll(".mj-tile").forEach((el) => {
+      const id = +el.dataset.id;
+      if (ids.includes(id)) el.classList.add("hint");
+    });
+  }
+
   function onTileClick(id) {
     if (gameWon || animating) return;
+    clearHint();
 
     const tile = tiles.find((t) => t.id === id);
     if (!tile || tile.removed) return;
@@ -561,18 +594,30 @@
 
   function showHint() {
     if (gameWon || animating) return;
+
+    if (hintStep === 1 && isHintPairValid(hintPair)) {
+      hintStep = 2;
+      selected = hintPair[1];
+      renderBoard();
+      applyHintGlow(hintPair);
+      setStatus("Hint: match the glowing tiles");
+      saveGame();
+      return;
+    }
+
+    clearHint();
     const pair = findHintPair();
     if (!pair) {
       setStatus("No matching pairs available", "err");
       return;
     }
+
+    hintPair = pair;
+    hintStep = 1;
     selected = pair[0];
     renderBoard();
-    boardEl.querySelectorAll(".mj-tile").forEach((el) => {
-      const id = +el.dataset.id;
-      if (id === pair[0] || id === pair[1]) el.classList.add("hint");
-    });
-    setStatus("Hint: match the glowing tiles");
+    applyHintGlow([pair[0]]);
+    setStatus("Hint: tap again for the matching tile");
     saveGame();
   }
 
@@ -604,6 +649,7 @@
     selected = null;
     history = [];
     animating = false;
+    clearHint();
     setStatus("");
 
     boardWrap.classList.add("is-clearing");
@@ -676,17 +722,43 @@
     lessons.forEach((lesson) => {
       const article = document.createElement("article");
       article.className = "lesson";
-      article.innerHTML = `<h3>${lesson.title}</h3><p>${lesson.body}</p>`;
+
+      const heading = document.createElement("h3");
+      heading.textContent = lesson.title;
+      article.appendChild(heading);
+
+      if (lesson.pronunciation) {
+        const sectionPron = document.createElement("p");
+        sectionPron.className = "mj-guide-pron";
+        sectionPron.textContent = lesson.pronunciation;
+        article.appendChild(sectionPron);
+      }
+
+      const body = document.createElement("p");
+      body.textContent = lesson.body;
+      article.appendChild(body);
 
       if (withSamples && lesson.samples?.length) {
         const row = document.createElement("div");
         row.className = "mj-guide-samples";
         row.setAttribute("aria-hidden", "true");
         for (const sample of lesson.samples) {
+          const sampleWrap = document.createElement("div");
+          sampleWrap.className = "mj-guide-sample";
+
           const tileEl = document.createElement("span");
           tileEl.className = `mj-guide-tile mj-${sample.kind}`;
           tileEl.appendChild(createTileFace(sample));
-          row.appendChild(tileEl);
+          sampleWrap.appendChild(tileEl);
+
+          if (sample.pronunciation) {
+            const pron = document.createElement("span");
+            pron.className = "mj-guide-pron";
+            pron.textContent = sample.pronunciation;
+            sampleWrap.appendChild(pron);
+          }
+
+          row.appendChild(sampleWrap);
         }
         article.appendChild(row);
       }
@@ -707,7 +779,7 @@
 
   function openGuide() {
     window.SudokuApp?.closeMenu?.();
-    if (guideBasics && !guideBasics.childElementCount) {
+    if (guideBasics) {
       fillGuidePanel(guideBasics, MahjongGuideBasics);
       fillGuidePanel(guideSymbols, MahjongGuideSymbols, true);
     }
