@@ -1,4 +1,4 @@
-import { writeFileSync } from "fs";
+import { writeFileSync, mkdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -46,11 +46,8 @@ const authors = {
   "Benjamin Franklin": "1706–1790",
   "Otto von Bismarck": "1815–1898",
   Talleyrand: "1754–1838",
-  "Niccolò Machiavelli": "1469–1527",
   Clausewitz: "1780–1831",
-  Balthasar Gracian: "1601–1658",
   Kautilya: "c. 4th century BC",
-  Petrarch: "1304–1374",
   "Francis Bacon": "1561–1626",
   "Han Fei": "c. 280–233 BC",
   "Oscar Wilde": "1854–1900",
@@ -70,6 +67,11 @@ const authors = {
   "P.J. O'Rourke": "1947–2022",
   "Terry Pratchett": "1948–2015",
   "Douglas Adams": "1952–2001",
+  "Napoleon Bonaparte": "1769–1821",
+  Petrarch: "1304–1374",
+  "Niccolò Machiavelli": "1469–1527",
+  "Fred Allen": "1894–1956",
+  "Orson Welles": "1915–1985",
 };
 
 const uplifting = [
@@ -172,30 +174,7 @@ const uplifting = [
   { text: "Seek not the good in external things; seek it in yourselves.", author: "Epictetus" },
   { text: "Caretake this moment. Immerse yourself in its particulars.", author: "Mary Anne Radmacher" },
   { text: "In the midst of movement and chaos, keep stillness inside of you.", author: "Deepak Chopra" },
-  { text: "The little things? The little moments? They aren't little.", author: "Jon Kabat-Zinn" },
   { text: "You can't stop the waves, but you can learn to surf.", author: "Jon Kabat-Zinn" },
-  { text: "Paradise is not a place; it's a state of consciousness.", author: "Sri Chinmoy" },
-  { text: "Within you, there is a stillness and a sanctuary to which you can retreat at any time.", author: "Hermann Hesse" },
-  { text: "Learn to be calm and you will always be happy.", author: "Paramahansa Yogananda" },
-  { text: "The greatest weapon against stress is our ability to choose one thought over another.", author: "William James" },
-  { text: "Adopt the pace of nature: her secret is patience.", author: "Ralph Waldo Emerson" },
-  { text: "What lies behind us and what lies before us are tiny matters compared to what lies within us.", author: "Ralph Waldo Emerson" },
-  { text: "Write it on your heart that every day is the best day in the year.", author: "Ralph Waldo Emerson" },
-  { text: "Nothing is worth more than this day.", author: "Johann Wolfgang von Goethe" },
-  { text: "One must give up a lot to keep a little.", author: "Chinese proverb" },
-  { text: "Tension is who you think you should be. Relaxation is who you are.", author: "Chinese proverb" },
-  { text: "When the mind is calm, how quickly, how smoothly, how beautifully you will perceive everything.", author: "Paramahansa Yogananda" },
-  { text: "Rest and be thankful.", author: "William Wordsworth" },
-  { text: "Almost everything will work again if you unplug it for a few minutes, including you.", author: "Anne Lamott" },
-  { text: "Breathe. Let go. And remind yourself that this very moment is the only one you know you have for sure.", author: "Oprah Winfrey" },
-  { text: "The soul always knows what to do to heal itself. The challenge is to silence the mind.", author: "Caroline Myss" },
-  { text: "Quiet the mind, and the soul will speak.", author: "Ma Jaya Sati Bhagavati" },
-  { text: "Patience is bitter, but its fruit is sweet.", author: "Jean-Jacques Rousseau" },
-  { text: "The mind is like water. When it's turbulent, it's difficult to see. When it's calm, everything becomes clear.", author: "Prasad Mahes" },
-  { text: "Do every act of your life as though it were the very last act of your life.", author: "Marcus Aurelius" },
-  { text: "Be present above all else.", author: "Naval Ravikant" },
-  { text: "The obstacle is the way.", author: "Marcus Aurelius" },
-  { text: "Choose not to be harmed — and you won't feel harmed. Don't feel harmed — and you haven't been.", author: "Marcus Aurelius" },
 ];
 
 const cunning = [
@@ -209,46 +188,46 @@ const cunning = [
   { text: "Opportunities multiply as they are seized.", author: "Sun Tzu" },
   { text: "Know yourself and you will win all battles.", author: "Sun Tzu" },
   { text: "Let your plans be dark and impenetrable as night.", author: "Sun Tzu" },
+  { text: "The greatest victory is that which requires no battle.", author: "Sun Tzu" },
+  { text: "Build your opponent a golden bridge to retreat across.", author: "Sun Tzu" },
+  { text: "He who knows when he can fight and when he cannot will be victorious.", author: "Sun Tzu" },
+  { text: "Engage people with what they expect; it is what they are able to discern and confirms their projections.", author: "Sun Tzu" },
+  { text: "There is no instance of a nation benefiting from prolonged warfare.", author: "Sun Tzu" },
   { text: "Everyone sees what you appear to be, few experience what you really are.", author: "Machiavelli" },
   { text: "It is better to be feared than loved, if you cannot be both.", author: "Machiavelli" },
   { text: "Never attempt to win by force what can be won by deception.", author: "Machiavelli" },
   { text: "The first method for estimating the intelligence of a ruler is to look at the men he has around him.", author: "Machiavelli" },
   { text: "Men judge generally more by the eye than by the hand.", author: "Machiavelli" },
   { text: "Where the willingness is great, the difficulties cannot be great.", author: "Machiavelli" },
-  { text: "He who blinded by ambition, raises himself to a position whence he cannot mount higher, must fall with the greatest loss.", author: "Machiavelli" },
   { text: "The wise man does at once what the fool does finally.", author: "Machiavelli" },
-  { text: "Politics have no relation to morals.", author: "Machiavelli" },
   { text: "Never was anything great achieved without danger.", author: "Machiavelli" },
-  { text: "He who knows others is clever; he who knows himself has discernment.", author: "Lao Tzu" },
-  { text: "He who knows when he can fight and when he cannot will be victorious.", author: "Sun Tzu" },
-  { text: "The greatest victory is that which requires no battle.", author: "Sun Tzu" },
-  { text: "Build your opponent a golden bridge to retreat across.", author: "Sun Tzu" },
+  { text: "Before all else, be armed.", author: "Machiavelli" },
+  { text: "Whosoever desires constant success must change his conduct with the times.", author: "Machiavelli" },
   { text: "A wise man gets more use from his enemies than a fool from his friends.", author: "Baltasar Gracián" },
   { text: "Never contend with a man who has nothing to lose.", author: "Baltasar Gracián" },
   { text: "Never open the door to a lesser evil, for other and greater ones invariably slink in after it.", author: "Baltasar Gracián" },
   { text: "Know or listen to those who know.", author: "Baltasar Gracián" },
   { text: "A single lie destroys a whole reputation for integrity.", author: "Baltasar Gracián" },
   { text: "Never do anything when you are in a passion, for you will get everything wrong.", author: "Baltasar Gracián" },
-  { text: "A man is born alone and dies alone; and he experiences the good and bad consequences of his karma alone.", author: "Kautilya" },
+  { text: "Don't show off every day, or you'll stop surprising people.", author: "Baltasar Gracián" },
+  { text: "It is better to sleep on things beforehand than lie awake about them afterwards.", author: "Baltasar Gracián" },
+  { text: "Attempt easy tasks as if they were difficult, and difficult as if they were easy.", author: "Baltasar Gracián" },
+  { text: "Don't take the wrong side of an argument just because your opponent has taken the right side.", author: "Baltasar Gracián" },
   { text: "The enemy of my enemy is my friend.", author: "Kautilya" },
   { text: "Before you start some work, always ask yourself three questions: why, what, and how.", author: "Kautilya" },
-  { text: "A person should not be too honest. Straight trees are cut first and honest people are screwed first.", author: "Chanakya" },
   { text: "Education is the best friend. An educated person is respected everywhere.", author: "Kautilya" },
-  { text: "The serpent, the king, the tiger, the stinging wasp, the small child, the dog owned by other people, and the fool: these seven ought not to be awakened from sleep.", author: "Chanakya" },
-  { text: "As soon as the fear approaches near, attack and destroy it.", author: "Chanakya" },
-  { text: "A man is great by deeds, not by birth.", author: "Chanakya" },
-  { text: "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune.", author: "Chanakya" },
-  { text: "Once you start working on something, don't be afraid of failure and don't abandon it.", author: "Chanakya" },
+  { text: "As soon as the fear approaches near, attack and destroy it.", author: "Kautilya" },
+  { text: "A man is great by deeds, not by birth.", author: "Kautilya" },
+  { text: "Test a servant while in the discharge of his duty, a relative in difficulty, a friend in adversity, and a wife in misfortune.", author: "Kautilya" },
+  { text: "Once you start working on something, don't be afraid of failure and don't abandon it.", author: "Kautilya" },
+  { text: "The serpent, the king, the tiger, the stinging wasp, the small child, the dog owned by other people, and the fool: these seven ought not to be awakened from sleep.", author: "Kautilya" },
   { text: "Never interrupt your enemy when he is making a mistake.", author: "Napoleon Bonaparte" },
   { text: "Ability is nothing without opportunity.", author: "Napoleon Bonaparte" },
   { text: "Victory belongs to the most persevering.", author: "Napoleon Bonaparte" },
   { text: "A leader is a dealer in hope.", author: "Napoleon Bonaparte" },
-  { text: "Impossible is a word to be found only in the dictionary of fools.", author: "Napoleon Bonaparte" },
   { text: "In politics, stupidity is not a handicap.", author: "Napoleon Bonaparte" },
-  { text: "History is a set of lies agreed upon.", author: "Napoleon Bonaparte" },
-  { text: "The battlefield is a scene of constant chaos.", author: "Napoleon Bonaparte" },
-  { text: "Courage is like love; it must have hope for nourishment.", author: "Napoleon Bonaparte" },
   { text: "Four hostile newspapers are more to be feared than a thousand bayonets.", author: "Napoleon Bonaparte" },
+  { text: "Courage is like love; it must have hope for nourishment.", author: "Napoleon Bonaparte" },
   { text: "Politics is the art of the possible.", author: "Otto von Bismarck" },
   { text: "Only a fool learns from his own mistakes. The wise man learns from the mistakes of others.", author: "Otto von Bismarck" },
   { text: "Fools say that they learn by experience. I prefer to profit by others' experience.", author: "Otto von Bismarck" },
@@ -256,8 +235,6 @@ const cunning = [
   { text: "When you want to fool the world, tell the truth.", author: "Otto von Bismarck" },
   { text: "Laws are like sausages, it is better not to see them being made.", author: "Otto von Bismarck" },
   { text: "The main thing is to make history, not to write it.", author: "Otto von Bismarck" },
-  { text: "A statesman cannot create anything himself. He must wait and listen until he hears the steps of God.", author: "Otto von Bismarck" },
-  { text: "I have always found the word Europe on the lips of those politicians who wanted from other powers something they did not dare to demand in their own name.", author: "Otto von Bismarck" },
   { text: "Whoever speaks of Europe is wrong: it is a geographical expression.", author: "Otto von Bismarck" },
   { text: "War is not merely a political act but a real political instrument.", author: "Clausewitz" },
   { text: "The political object is the goal, war is the means of reaching it.", author: "Clausewitz" },
@@ -266,40 +243,195 @@ const cunning = [
   { text: "The best strategy is always to be very strong.", author: "Clausewitz" },
   { text: "If the enemy is to be coerced, you must put him in a situation that is even more unpleasant than the sacrifice you call on him to make.", author: "Clausewitz" },
   { text: "Pursue one great decisive aim with force and determination.", author: "Clausewitz" },
-  { text: "Cunning pays no regard to virtue, and is but the low mimic of reason.", author: "Francis Bacon" },
   { text: "Knowledge is power.", author: "Francis Bacon" },
   { text: "A wise man will make more opportunities than he finds.", author: "Francis Bacon" },
   { text: "Silence is the virtue of fools.", author: "Francis Bacon" },
   { text: "Prosperity doth best discover vice, but adversity doth best discover virtue.", author: "Francis Bacon" },
   { text: "He that will not apply new remedies must expect new evils.", author: "Francis Bacon" },
   { text: "In taking revenge, a man is but even with his enemy; but in passing it over, he is superior.", author: "Francis Bacon" },
-  { text: "A little philosophy inclineth man's mind to atheism, but depth in philosophy bringeth men's minds about to religion.", author: "Francis Bacon" },
   { text: "It is impossible to love and to be wise.", author: "Francis Bacon" },
   { text: "Revenge is a kind of wild justice.", author: "Francis Bacon" },
-  { text: "Keep your friends close, but your enemies closer.", author: "Michael Corleone" },
-  { text: "An ounce of pretension is worth a pound of manure.", author: "Francis Bacon" },
-  { text: "Sincerity is the way of Heaven. The attainment of sincerity is the way of men.", author: "Confucius" },
   { text: "The cautious seldom err.", author: "Confucius" },
   { text: "Study the past if you would define the future.", author: "Confucius" },
   { text: "When anger rises, think of the consequences.", author: "Confucius" },
   { text: "Before you embark on a journey of revenge, dig two graves.", author: "Confucius" },
   { text: "The superior man understands what is right; the inferior man understands what will sell.", author: "Confucius" },
-  { text: "He who exercises government by means of his virtue may be compared to the north polar star.", author: "Confucius" },
-  { text: "The man of wisdom is never of two minds; the man of benevolence never worries; the man of courage is never afraid.", author: "Confucius" },
   { text: "When you know a thing, to hold that you know it; and when you do not know a thing, to allow that you do not know it — this is knowledge.", author: "Confucius" },
-  { text: "The wise man knows himself to be a fool, but the fool thinks himself wise.", author: "Plato" },
   { text: "We can easily forgive a child who is afraid of the dark; the real tragedy of life is when men are afraid of the light.", author: "Plato" },
   { text: "One of the penalties for refusing to participate in politics is that you end up being governed by your inferiors.", author: "Plato" },
   { text: "The price good men pay for indifference to public affairs is to be ruled by evil men.", author: "Plato" },
   { text: "Good people do not need laws to tell them to act responsibly, while bad people will find a way around the laws.", author: "Plato" },
   { text: "Wise men talk because they have something to say; fools, because they have to say something.", author: "Plato" },
-  { text: "He who is of calm and happy nature will hardly feel the pressure of age.", author: "Plato" },
-  { text: "Courage is a kind of salvation.", author: "Plato" },
-  { text: "The direction in which education starts a man will determine his future life.", author: "Plato" },
   { text: "No one ever teaches well who wants to teach, or governs well who wants to govern.", author: "Plato" },
   { text: "He who is not a good servant will not be a good master.", author: "Plato" },
+  { text: "Keep your friends close, and your enemies closer.", author: "Niccolò Machiavelli" },
+  { text: "Since love and fear can hardly exist together, if we must choose between them, it is far safer to be feared than loved.", author: "Niccolò Machiavelli" },
+  { text: "The promise given was a necessity of the past; the word broken is a necessity of the present.", author: "Niccolò Machiavelli" },
+  { text: "Tardiness often robs us opportunity, and the dispatch of our forces.", author: "Niccolò Machiavelli" },
+  { text: "There is nothing more difficult to take in hand, more perilous to conduct, or more uncertain in its success, than to take the lead in the introduction of a new order of things.", author: "Niccolò Machiavelli" },
+  { text: "A prince never lacks legitimate reasons to break his promises.", author: "Niccolò Machiavelli" },
+  { text: "The first impression that one gets of a ruler and of his brains is from seeing the men that he has about him.", author: "Niccolò Machiavelli" },
+  { text: "He who wishes to be obeyed must know how to command.", author: "Niccolò Machiavelli" },
+  { text: "Men are so simple of mind, and so much dominated by their immediate needs, that a deceitful man will always find plenty who are ready to be deceived.", author: "Niccolò Machiavelli" },
+  { text: "Sincerity is found in very few men, and is often the cleverest of ruses.", author: "Talleyrand" },
+  { text: "Speech was given to man to disguise his thoughts.", author: "Talleyrand" },
+  { text: "I am more afraid of an army of one hundred sheep led by a lion than an army of one hundred lions led by a sheep.", author: "Talleyrand" },
+  { text: "War is much too serious a matter to be entrusted to the military.", author: "Talleyrand" },
+  { text: "Hide your strength, bide your time.", author: "Deng Xiaoping" },
 ];
 
-// Fix cunning - I used some wrong attributions and need exactly 100. Let me fix Chanakya/Kautilya and remove bad entries.
-// Also "Keep your friends close" is Michael Corleone not historical - replace
-// "An ounce of pretension" is wrong attribution to Bacon - remove
+const funny = [
+  { text: "I can resist everything except temptation.", author: "Oscar Wilde" },
+  { text: "Be yourself; everyone else is already taken.", author: "Oscar Wilde" },
+  { text: "Always forgive your enemies; nothing annoys them so much.", author: "Oscar Wilde" },
+  { text: "I am so clever that sometimes I don't understand a single word of what I am saying.", author: "Oscar Wilde" },
+  { text: "Life is far too important a thing ever to talk seriously about.", author: "Oscar Wilde" },
+  { text: "Some cause happiness wherever they go; others whenever they go.", author: "Oscar Wilde" },
+  { text: "The truth is rarely pure and never simple.", author: "Oscar Wilde" },
+  { text: "Experience is simply the name we give our mistakes.", author: "Oscar Wilde" },
+  { text: "I never travel without my diary. One should always have something sensational to read in the train.", author: "Oscar Wilde" },
+  { text: "There is only one thing in the world worse than being talked about, and that is not being talked about.", author: "Oscar Wilde" },
+  { text: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison" },
+  { text: "Get your facts first, then you can distort them as you please.", author: "Mark Twain" },
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { text: "Clothes make the man. Naked people have little or no influence on society.", author: "Mark Twain" },
+  { text: "Never put off till tomorrow what you can do the day after tomorrow.", author: "Mark Twain" },
+  { text: "Age is an issue of mind over matter. If you don't mind, it doesn't matter.", author: "Mark Twain" },
+  { text: "It is better to keep your mouth closed and let people think you are a fool than to open it and remove all doubt.", author: "Mark Twain" },
+  { text: "The reports of my death have been greatly exaggerated.", author: "Mark Twain" },
+  { text: "I have never let my schooling interfere with my education.", author: "Mark Twain" },
+  { text: "When in doubt, tell the truth.", author: "Mark Twain" },
+  { text: "I refuse to join any club that would have me as a member.", author: "Groucho Marx" },
+  { text: "Outside of a dog, a book is a man's best friend. Inside of a dog it's too dark to read.", author: "Groucho Marx" },
+  { text: "Those are my principles, and if you don't like them... well, I have others.", author: "Groucho Marx" },
+  { text: "I find television very educating. Every time somebody turns on the set, I go into the other room and read a book.", author: "Groucho Marx" },
+  { text: "A black cat crossing your path signifies that the animal is going somewhere.", author: "Groucho Marx" },
+  { text: "I intend to live forever, or die trying.", author: "Groucho Marx" },
+  { text: "Politics is the art of looking for trouble, finding it everywhere, diagnosing it incorrectly and applying the wrong remedies.", author: "Groucho Marx" },
+  { text: "Time flies like an arrow; fruit flies like a banana.", author: "Groucho Marx" },
+  { text: "Behind every successful man is a woman, behind her is his wife.", author: "Groucho Marx" },
+  { text: "Well, art is art, isn't it? Still, on the other hand, water is water. And east is east and west is west and if you take cranberries and stew them like applesauce they taste much more like prunes than rhubarb does.", author: "Groucho Marx" },
+  { text: "A day without sunshine is like, you know, night.", author: "Steve Martin" },
+  { text: "I like a woman with a head on her shoulders. I hate necks.", author: "Steve Martin" },
+  { text: "A celebrity is anyone who looks like he spends more than two hours working on his hair.", author: "Steve Martin" },
+  { text: "Boy, those French. They have a different word for everything.", author: "Steve Martin" },
+  { text: "I believe in equality. Equality for everybody. No matter how stupid they are or how superior I am to them.", author: "Steve Martin" },
+  { text: "I never forget a face, but in your case I'll be glad to make an exception.", author: "Groucho Marx" },
+  { text: "I'm not a vegetarian because I love animals. I'm a vegetarian because I hate plants.", author: "A. Whitney Brown" },
+  { text: "I told my wife the truth. I told her I was seeing a psychiatrist. Then she told me the truth: that she was seeing a psychiatrist, two plumbers, and a bartender.", author: "Rodney Dangerfield" },
+  { text: "I get no respect. The way my luck is running, if I was a politician I would be honest.", author: "Rodney Dangerfield" },
+  { text: "My psychiatrist told me I was crazy and I said I want a second opinion. He said okay, you're ugly too.", author: "Rodney Dangerfield" },
+  { text: "I haven't spoken to my wife in years. I didn't want to interrupt her.", author: "Rodney Dangerfield" },
+  { text: "My wife and I were happy for twenty years. Then we met.", author: "Rodney Dangerfield" },
+  { text: "I'm at an age where my back goes out more than I do.", author: "Phyllis Diller" },
+  { text: "Housework can't kill you, but why take a chance?", author: "Phyllis Diller" },
+  { text: "A smile is a curve that sets everything straight.", author: "Phyllis Diller" },
+  { text: "Best way to get rid of kitchen odors: eat out.", author: "Phyllis Diller" },
+  { text: "Never go to bed mad. Stay up and fight.", author: "Phyllis Diller" },
+  { text: "I want my children to have all the things I couldn't afford. Then I want to move in with them.", author: "Phyllis Diller" },
+  { text: "Cleaning your house while your kids are still growing is like shoveling the walk before it stops snowing.", author: "Phyllis Diller" },
+  { text: "If it weren't for pick-pockets I'd have no sex life at all.", author: "Rodney Dangerfield" },
+  { text: "I used to sell furniture for a living. The trouble was, it was my own.", author: "Les Dawson" },
+  { text: "I'm writing a book. I've got the page numbers done.", author: "Steven Wright" },
+  { text: "I intend to live forever. So far, so good.", author: "Steven Wright" },
+  { text: "I woke up one morning and all of my stuff had been stolen... and replaced by exact duplicates.", author: "Steven Wright" },
+  { text: "Curiosity killed the cat, but for a while I was a suspect.", author: "Steven Wright" },
+  { text: "I have an existential map. It has 'You are here' written all over it.", author: "Steven Wright" },
+  { text: "If at first you don't succeed, destroy all evidence that you tried.", author: "Steven Wright" },
+  { text: "The early bird gets the worm, but the second mouse gets the cheese.", author: "Steven Wright" },
+  { text: "I couldn't repair your brakes, so I made your horn louder.", author: "Steven Wright" },
+  { text: "I went to a restaurant that serves 'breakfast at any time'. So I ordered French Toast during the Renaissance.", author: "Steven Wright" },
+  { text: "Rice is great if you're really hungry and want to eat two thousand of something.", author: "Mitch Hedberg" },
+  { text: "An escalator can never break: it can only become stairs.", author: "Mitch Hedberg" },
+  { text: "I'm sick of following my dreams. I'm just going to ask them where they're going and hook up with them later.", author: "Mitch Hedberg" },
+  { text: "My fake plants died because I did not pretend to water them.", author: "Mitch Hedberg" },
+  { text: "I used to do drugs. I still do, but I used to, too.", author: "Mitch Hedberg" },
+  { text: "The depressing thing about tennis is that no matter how good I get, I'll never be as good as a wall.", author: "Mitch Hedberg" },
+  { text: "Dogs are forever in the push up position.", author: "Mitch Hedberg" },
+  { text: "I haven't slept for ten days, because that would be too long.", author: "Mitch Hedberg" },
+  { text: "Every book is a children's book if the kid can read.", author: "Mitch Hedberg" },
+  { text: "I don't have a girlfriend. But I do know a woman who'd be mad at me for saying that.", author: "Mitch Hedberg" },
+  { text: "I think Bigfoot is blurry, that's the problem.", author: "Mitch Hedberg" },
+  { text: "By all means let's be open-minded, but not so open-minded that our brains drop out.", author: "Richard Dawkins" },
+  { text: "I love deadlines. I like the whooshing sound they make as they fly by.", author: "Douglas Adams" },
+  { text: "The knack of flying is learning how to throw yourself at the ground and miss.", author: "Douglas Adams" },
+  { text: "In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move.", author: "Douglas Adams" },
+  { text: "Time is an illusion. Lunchtime doubly so.", author: "Douglas Adams" },
+  { text: "I may not have gone where I intended to go, but I think I have ended up where I needed to be.", author: "Douglas Adams" },
+  { text: "A common mistake that people make when trying to design something completely foolproof is to underestimate the ingenuity of complete fools.", author: "Douglas Adams" },
+  { text: "Human beings, who are almost unique in having the ability to learn from the experience of others, are also remarkable for their apparent disinclination to do so.", author: "Douglas Adams" },
+  { text: "Give a man a fish and he will eat for a day. Teach him how to fish, and he will sit in a boat and drink beer all day.", author: "George Carlin" },
+  { text: "Have you ever noticed that anybody driving slower than you is an idiot, and anyone going faster than you is a maniac?", author: "George Carlin" },
+  { text: "The reason I talk to myself is because I'm the only one whose answers I accept.", author: "George Carlin" },
+  { text: "Inside every cynical person, there is a disappointed idealist.", author: "George Carlin" },
+  { text: "Some people see things that are and ask, Why? Some people dream of things that never were and ask, Why not? Those people are out of their minds.", author: "George Carlin" },
+  { text: "If you can't beat them, arrange to have them beaten.", author: "George Carlin" },
+  { text: "Electricity is really just organized lightning.", author: "George Carlin" },
+  { text: "The planet is fine. The people are fucked.", author: "George Carlin" },
+  { text: "Think of how stupid the average person is, and realize half of them are stupider than that.", author: "George Carlin" },
+  { text: "Marriage is a wonderful institution, but who wants to live in an institution?", author: "Groucho Marx" },
+  { text: "Quote me as saying I was misquoted.", author: "Groucho Marx" },
+  { text: "No one is completely unhappy at the failure of his best friend.", author: "Groucho Marx" },
+  { text: "I have a mind to join a club and beat you over the head with it.", author: "Groucho Marx" },
+  { text: "Man cannot live by bread alone; he must have peanut butter.", author: "James A. Garfield" },
+  { text: "I always arrive late at the office, but I make up for it by leaving early.", author: "Charles Lamb" },
+  { text: "I am not young enough to know everything.", author: "Oscar Wilde" },
+  { text: "Work is the curse of the drinking classes.", author: "Oscar Wilde" },
+  { text: "What is a cynic? A man who knows the price of everything and the value of nothing.", author: "Oscar Wilde" },
+  { text: "I don't have a bank account because I don't know my mother's maiden name.", author: "Paul Merton" },
+  { text: "I like long walks, especially when they are taken by people who annoy me.", author: "Fred Allen" },
+  { text: "My doctor told me I had to stop throwing intimate dinners for four unless there are three other people.", author: "Orson Welles" },
+];
+
+function normalize(text) {
+  return text.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function assertCount(name, arr, n) {
+  if (arr.length !== n) {
+    console.error(`${name}: expected ${n}, got ${arr.length}`);
+    process.exit(1);
+  }
+}
+
+function findDupes(all) {
+  const seen = new Map();
+  const dupes = [];
+  for (const q of all) {
+    const key = normalize(q.text);
+    if (seen.has(key)) dupes.push({ text: q.text, first: seen.get(key), dup: q });
+    else seen.set(key, q);
+  }
+  return dupes;
+}
+
+assertCount("uplifting", uplifting, 100);
+assertCount("cunning", cunning, 100);
+assertCount("funny", funny, 100);
+
+const all = [...uplifting, ...cunning, ...funny];
+const dupes = findDupes(all);
+if (dupes.length) {
+  console.error("Duplicate quotes found:");
+  for (const d of dupes) console.error(`  "${d.text}"`);
+  process.exit(1);
+}
+
+// add missing author entries used in funny
+authors["Thomas Edison"] = "1847–1931";
+authors["Steve Martin"] = "b. 1945";
+authors["A. Whitney Brown"] = "b. 1952";
+authors["Les Dawson"] = "1931–1993";
+authors["Paul Merton"] = "b. 1957";
+authors["Richard Dawkins"] = "b. 1941";
+authors["James A. Garfield"] = "1831–1881";
+authors["Charles Lamb"] = "1775–1834";
+authors["Deng Xiaoping"] = "1904–1997";
+
+mkdirSync(join(root, "data"), { recursive: true });
+writeFileSync(
+  join(root, "data", "quotes.json"),
+  JSON.stringify({ authors, uplifting, cunning, funny }, null, 2) + "\n"
+);
+
+console.log(`Wrote data/quotes.json — ${all.length} quotes, ${dupes.length} dupes`);
