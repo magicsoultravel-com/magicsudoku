@@ -183,49 +183,84 @@ const Mahjong = (() => {
     return isFree(temp, placed);
   }
 
-  /** Reverse-deal: place pairs on free slots — fast and always solvable. */
-  function dealSolvable(seed) {
+  function makeTile(slotId, def) {
+    const pos = LAYOUT[slotId];
+    return {
+      id: slotId,
+      kind: def.kind,
+      rank: def.rank,
+      label: def.label,
+      key: def.key,
+      z: pos.z,
+      x: pos.x,
+      y: pos.y,
+      removed: false,
+    };
+  }
+
+  /** Reverse-deal with backtracking — guaranteed solvable when it succeeds. */
+  function dealSolvable(seed, nodeBudget = 80000) {
     const rand = mulberry32(seed);
     const pairs = buildPairQueue(rand);
     const unplaced = new Set(LAYOUT.map((_, i) => i));
     const placed = [];
     const byId = new Map();
+    let nodes = 0;
 
-    for (const [tileA, tileB] of pairs) {
+    function backtrack(pairIdx) {
+      if (pairIdx >= pairs.length) return unplaced.size === 0;
+      if (++nodes > nodeBudget) return false;
+
+      const [tileA, tileB] = pairs[pairIdx];
       const freeSlots = [...unplaced].filter((id) => isSlotFree(id, placed, LAYOUT[id]));
-      if (freeSlots.length < 2) return null;
+      if (freeSlots.length < 2) return false;
 
-      const i1 = Math.floor(rand() * freeSlots.length);
-      const s1 = freeSlots[i1];
-      freeSlots.splice(i1, 1);
-      const s2 = freeSlots[Math.floor(rand() * freeSlots.length)];
+      shuffle(freeSlots, rand);
 
-      for (const [slotId, def] of [
-        [s1, tileA],
-        [s2, tileB],
-      ]) {
-        const pos = LAYOUT[slotId];
-        const tile = {
-          id: slotId,
-          kind: def.kind,
-          rank: def.rank,
-          label: def.label,
-          key: def.key,
-          z: pos.z,
-          x: pos.x,
-          y: pos.y,
-          removed: false,
-        };
-        placed.push(tile);
-        byId.set(slotId, tile);
-        unplaced.delete(slotId);
+      for (let i = 0; i < freeSlots.length; i++) {
+        for (let j = i + 1; j < freeSlots.length; j++) {
+          const s1 = freeSlots[i];
+          const s2 = freeSlots[j];
+          const t1 = makeTile(s1, tileA);
+          const t2 = makeTile(s2, tileB);
+
+          placed.push(t1, t2);
+          byId.set(s1, t1);
+          byId.set(s2, t2);
+          unplaced.delete(s1);
+          unplaced.delete(s2);
+
+          if (backtrack(pairIdx + 1)) return true;
+
+          placed.pop();
+          placed.pop();
+          byId.delete(s1);
+          byId.delete(s2);
+          unplaced.add(s1);
+          unplaced.add(s2);
+        }
       }
+      return false;
     }
 
-    if (unplaced.size > 0) return null;
+    if (!backtrack(0)) return null;
+    return LAYOUT.map((_, i) => byId.get(i));
+  }
 
-    const tiles = LAYOUT.map((_, i) => byId.get(i));
-    return tiles;
+  function dealShuffled(seed) {
+    const rand = mulberry32(seed);
+    const deck = shuffle(buildDeck(), rand);
+    return LAYOUT.map((pos, i) => ({
+      id: i,
+      kind: deck[i].kind,
+      rank: deck[i].rank,
+      label: deck[i].label,
+      key: deck[i].key,
+      z: pos.z,
+      x: pos.x,
+      y: pos.y,
+      removed: false,
+    }));
   }
 
   function generate(seed = Date.now()) {
@@ -238,22 +273,21 @@ const Mahjong = (() => {
       throw new Error(`Deck size mismatch for layout ${count}`);
     }
 
-    const maxAttempts = 24;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const trySeed = (seed + attempt) >>> 0;
+    for (let attempt = 0; attempt < 48; attempt++) {
+      const trySeed = (seed + attempt * 7919) >>> 0;
       const tiles = dealSolvable(trySeed);
       if (tiles) {
-        return { tiles, seed: trySeed, layout: LAYOUT };
+        return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
       }
     }
 
-    for (let extra = 0; extra < 20; extra++) {
-      const trySeed = (seed ^ ((extra + 1) * 2654435761)) >>> 0;
-      const tiles = dealSolvable(trySeed);
-      if (tiles) return { tiles, seed: trySeed, layout: LAYOUT };
-    }
-
-    throw new Error("Failed to deal a mahjong board");
+    const fallbackSeed = (seed ^ 0x9e3779b9) >>> 0;
+    return {
+      tiles: dealShuffled(fallbackSeed),
+      seed: fallbackSeed,
+      layout: LAYOUT,
+      solvable: false,
+    };
   }
 
   function remaining(tiles) {

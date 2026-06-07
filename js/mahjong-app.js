@@ -442,11 +442,19 @@
 
     boardWrap.classList.add("is-clearing");
     setTimeout(() => {
-      const result = Mahjong.generate(seed);
-      tiles = result.tiles;
-      seed = result.seed;
-      recordGameStarted();
-      renderBoard();
+      try {
+        const result = Mahjong.generate(seed);
+        tiles = result.tiles;
+        seed = result.seed;
+        recordGameStarted();
+        renderBoard();
+        if (!result.solvable) {
+          setStatus("Board dealt — use Hint if you get stuck", "err");
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus("Could not deal board — try New game again", "err");
+      }
       boardWrap.classList.remove("is-clearing");
       resetTimer();
       btnUndo.disabled = true;
@@ -464,9 +472,15 @@
 
     boardWrap.classList.add("is-clearing");
     setTimeout(() => {
-      const result = Mahjong.generate(seed ?? Date.now());
-      tiles = result.tiles;
-      renderBoard();
+      try {
+        const result = Mahjong.generate(seed ?? Date.now());
+        tiles = result.tiles;
+        seed = result.seed;
+        renderBoard();
+      } catch (err) {
+        console.error(err);
+        setStatus("Could not deal board — try New game again", "err");
+      }
       boardWrap.classList.remove("is-clearing");
       resetTimer();
       btnUndo.disabled = true;
