@@ -86,6 +86,7 @@
   let quoteSplashActive = false;
   let cellPickerOpen = false;
   let cellPickerCell = null;
+  let pickerNoteBatch = false;
   let gamesStarted = 0;
   let gamesCompleted = 0;
 
@@ -572,6 +573,7 @@
       togglePencilFromPicker();
     });
     cellPicker.appendChild(pencilBtn);
+    cellPicker.addEventListener("pointerdown", (e) => e.stopPropagation());
   }
 
   function togglePencilFromPicker() {
@@ -588,8 +590,9 @@
 
   function shouldShowCellPicker(row, col) {
     if (gameWon || given[row][col]) return false;
-    if (activeNumber !== null || activePencilSet.size > 0) return false;
-    if (pencilMode && puzzle[row][col] !== 0) return false;
+    if (activeNumber !== null) return false;
+    if (pencilMode) return puzzle[row][col] === 0;
+    if (activePencilSet.size > 0) return false;
     return true;
   }
 
@@ -597,6 +600,7 @@
     if (!cellPickerOpen) return;
     cellPickerOpen = false;
     cellPickerCell = null;
+    pickerNoteBatch = false;
     cellPicker.classList.remove("is-open");
     cellPicker.hidden = true;
   }
@@ -640,13 +644,39 @@
   function openCellPicker(row, col) {
     cellPickerCell = { row, col };
     cellPickerOpen = true;
+    pickerNoteBatch = false;
     positionCellPicker(row, col);
     syncCellPicker();
     requestAnimationFrame(() => cellPicker.classList.add("is-open"));
   }
 
+  function refreshPickerCell() {
+    if (!cellPickerCell) return;
+    const { row, col } = cellPickerCell;
+    const cell = boardEl.children[row * 9 + col];
+    if (!cell || puzzle[row][col] !== 0) return;
+    cell.innerHTML = "";
+    if (notes[row][col].size) renderNotes(cell, row, col);
+  }
+
+  function toggleNoteInPicker(row, col, num) {
+    if (given[row][col] || puzzle[row][col] !== 0 || gameWon) return;
+    if (!pickerNoteBatch) {
+      pushHistory();
+      pickerNoteBatch = true;
+    }
+    if (notes[row][col].has(num)) notes[row][col].delete(num);
+    else notes[row][col].add(num);
+    ensureTimerRunning();
+    clearErrors();
+    refreshPickerCell();
+    syncCellPicker();
+    saveGame();
+  }
+
   function onCellPickerClick(num, e) {
     e.stopPropagation();
+    e.preventDefault();
     if (!cellPickerCell || gameWon) return;
 
     const { row, col } = cellPickerCell;
@@ -655,9 +685,7 @@
     selected = { row, col };
 
     if (pencilMode) {
-      if (puzzle[row][col] === 0) toggleNoteAt(row, col, num);
-      syncCellPicker();
-      positionCellPicker(row, col);
+      if (puzzle[row][col] === 0) toggleNoteInPicker(row, col, num);
       return;
     }
 
@@ -841,15 +869,6 @@
   function selectCell(row, col) {
     if (gameWon) return;
 
-    if (activePencilSet.size && !given[row][col]) {
-      if (pencilMode && puzzle[row][col] === 0) {
-        selected = { row, col };
-        applyPencilToCell(row, col);
-        closeCellPicker();
-        return;
-      }
-    }
-
     if (activeNumber !== null && !given[row][col]) {
       if (!pencilMode && Sudoku.isValid(puzzle, row, col, activeNumber)) {
         selected = { row, col };
@@ -879,6 +898,16 @@
       renderBoard();
       openCellPicker(row, col);
       saveGame();
+      return;
+    }
+
+    if (
+      pencilMode &&
+      activePencilSet.size &&
+      puzzle[row][col] === 0 &&
+      !given[row][col]
+    ) {
+      applyPencilToCell(row, col);
       return;
     }
 
