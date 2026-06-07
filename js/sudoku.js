@@ -150,6 +150,46 @@ const Sudoku = (() => {
     return puzzle;
   }
 
+  function tick() {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  async function createPuzzleAsync(solution, clueCount, rng, onProgress) {
+    const puzzle = cloneGrid(solution);
+    const cells = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        cells.push([r, c]);
+      }
+    }
+    shuffle(cells, rng);
+
+    let removed = 0;
+    const target = SIZE * SIZE - clueCount;
+    let step = 0;
+
+    for (const [row, col] of cells) {
+      if (removed >= target) break;
+      step++;
+      if (step % 3 === 0) {
+        if (typeof onProgress === "function") {
+          onProgress(0.28 + (removed / Math.max(target, 1)) * 0.68);
+        }
+        await tick();
+      }
+      const backup = puzzle[row][col];
+      puzzle[row][col] = 0;
+      const test = cloneGrid(puzzle);
+      if (countSolutions(test, 2) === 1) {
+        removed++;
+      } else {
+        puzzle[row][col] = backup;
+      }
+    }
+
+    return puzzle;
+  }
+
   function generate(difficulty = "medium", seed = null) {
     const actualSeed = seed || createSeed();
     const rng = mulberry32(hashSeed(`${actualSeed}:${difficulty}`));
@@ -163,6 +203,37 @@ const Sudoku = (() => {
 
     const given = puzzle.map((row) => row.map((v) => v !== 0));
 
+    return { puzzle, solution, given, seed: actualSeed, difficulty };
+  }
+
+  async function generateAsync(difficulty = "medium", seed = null, onProgress) {
+    const report = (p, label) => {
+      if (typeof onProgress === "function") {
+        onProgress(Math.min(1, Math.max(0, p)), label);
+      }
+    };
+
+    report(0.06, "Building grid…");
+    await tick();
+
+    const actualSeed = seed || createSeed();
+    const rng = mulberry32(hashSeed(`${actualSeed}:${difficulty}`));
+
+    const grid = emptyGrid();
+    fillDiagonal(grid, rng);
+    report(0.18, "Solving pattern…");
+    await tick();
+    solve(grid, rng);
+    const solution = cloneGrid(grid);
+
+    const clueCount = CLUES[difficulty] ?? CLUES.medium;
+    report(0.26, "Carving puzzle…");
+    const puzzle = await createPuzzleAsync(solution, clueCount, rng, (p) => {
+      report(p, "Carving puzzle…");
+    });
+
+    const given = puzzle.map((row) => row.map((v) => v !== 0));
+    report(1, "Ready");
     return { puzzle, solution, given, seed: actualSeed, difficulty };
   }
 
@@ -208,6 +279,7 @@ const Sudoku = (() => {
   return {
     SIZE,
     generate,
+    generateAsync,
     createSeed,
     isComplete,
     hasConflicts,

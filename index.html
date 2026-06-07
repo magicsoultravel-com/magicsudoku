@@ -105,6 +105,14 @@
 
     <main class="main sudoku-only">
       <div class="board-wrap">
+        <div id="generate-overlay" class="generate-overlay" hidden aria-hidden="true">
+          <div class="generate-panel">
+            <p id="generate-label" class="generate-label">Generating puzzle…</p>
+            <div id="generate-progress" class="generate-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="generate-label">
+              <div id="generate-bar" class="generate-bar"></div>
+            </div>
+          </div>
+        </div>
         <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
         <div id="cell-picker" class="cell-picker" hidden role="group" aria-label="Pick a number"></div>
         <div id="board-cat" class="board-cat" data-pose="walk" hidden aria-hidden="true" title="Click to pet · drag to toss"></div>

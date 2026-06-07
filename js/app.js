@@ -16,6 +16,9 @@
   const quoteProceed = document.getElementById("quote-proceed");
   const QUOTE_BUTTON_DELAY_MS = 2200;
   const QUOTE_FADE_MS = 280;
+  const GENERATE_PROGRESS_DELAY_MS = 500;
+  const GENERATE_CLEAR_MS = 280;
+  const GENERATE_READY_MS = 200;
   const lessonsDialog = document.getElementById("lessons-dialog");
   const lessonsBasics = document.getElementById("lessons-basics");
   const lessonsAdvanced = document.getElementById("lessons-advanced");
@@ -42,6 +45,10 @@
   const btnCat = document.getElementById("btn-companion-cat");
   const boardCat = document.getElementById("board-cat");
   const cellPicker = document.getElementById("cell-picker");
+  const generateOverlay = document.getElementById("generate-overlay");
+  const generateLabel = document.getElementById("generate-label");
+  const generateProgress = document.getElementById("generate-progress");
+  const generateBar = document.getElementById("generate-bar");
 
   const STATE_KEY = "sudoku-game";
   const SEED_KEY = "sudoku-seeds";
@@ -89,6 +96,7 @@
   let pickerNoteBatch = false;
   let gamesStarted = 0;
   let gamesCompleted = 0;
+  let generateToken = 0;
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1233,8 +1241,36 @@
     recordSeed(result.seed, result.difficulty);
   }
 
+  function setGenerateProgress(p, label) {
+    const pct = Math.round(p * 100);
+    if (generateBar) generateBar.style.width = `${pct}%`;
+    generateProgress?.setAttribute("aria-valuenow", String(pct));
+    if (label && generateLabel) generateLabel.textContent = label;
+  }
+
+  function hideGenerateOverlay() {
+    if (!generateOverlay) return;
+    generateOverlay.classList.remove("is-visible");
+    generateOverlay.hidden = true;
+    generateOverlay.setAttribute("aria-hidden", "true");
+    setGenerateProgress(0, "Generating puzzle…");
+  }
+
+  function showGenerateOverlay() {
+    if (!generateOverlay) return;
+    setGenerateProgress(0.08, "Generating puzzle…");
+    generateOverlay.hidden = false;
+    generateOverlay.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+      generateOverlay.classList.add("is-visible");
+    });
+  }
+
   async function newGame({ skipQuote = false } = {}) {
+    const token = ++generateToken;
+
     closeMenu();
+    closeCellPicker();
     gameWon = false;
     selected = null;
     activeNumber = null;
@@ -1245,18 +1281,62 @@
 
     if (!skipQuote) {
       await showQuoteSplash();
+      if (token !== generateToken) return;
     }
 
-    const difficulty = difficultyEl.value;
     boardWrap.classList.add("is-clearing");
+    await wait(GENERATE_CLEAR_MS);
+    if (token !== generateToken) return;
 
-    await wait(260);
+    boardWrap.classList.add("is-generating");
+    boardWrap.classList.remove("is-clearing");
 
-    applyGameResult(Sudoku.generate(difficulty));
+    let overlayShown = false;
+    let progressTimer = null;
+    let lastProgress = 0;
+    let lastProgressLabel = "Generating puzzle…";
+    const revealProgress = () => {
+      if (token !== generateToken || overlayShown) return;
+      overlayShown = true;
+      showGenerateOverlay();
+      setGenerateProgress(Math.max(lastProgress, 0.08), lastProgressLabel);
+    };
+    progressTimer = setTimeout(revealProgress, GENERATE_PROGRESS_DELAY_MS);
+
+    const difficulty = difficultyEl.value;
+    let result;
+    try {
+      result = await Sudoku.generateAsync(difficulty, null, (p, label) => {
+        if (token !== generateToken) return;
+        lastProgress = p;
+        if (label) lastProgressLabel = label;
+        if (overlayShown) setGenerateProgress(p, label);
+      });
+    } catch (err) {
+      console.error(err);
+      clearTimeout(progressTimer);
+      if (token !== generateToken) return;
+      hideGenerateOverlay();
+      boardWrap.classList.remove("is-generating");
+      setStatus("Could not generate puzzle — try again", "err");
+      return;
+    }
+
+    clearTimeout(progressTimer);
+    if (token !== generateToken) return;
+
+    if (overlayShown) {
+      setGenerateProgress(1, "Ready");
+      await wait(GENERATE_READY_MS);
+      if (token !== generateToken) return;
+      hideGenerateOverlay();
+    }
+
+    boardWrap.classList.remove("is-generating");
+    applyGameResult(result);
     recordGameStarted();
     animateBoardReveal = true;
     renderBoard();
-    boardWrap.classList.remove("is-clearing");
     resetTimer();
     setStatus("");
     updateUndoRedo();
