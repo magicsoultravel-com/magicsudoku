@@ -390,7 +390,7 @@ const funny = [
   { text: "Some people see things that are and ask, Why? Some people dream of things that never were and ask, Why not? Those people are out of their minds.", author: "George Carlin" },
   { text: "If you can't beat them, arrange to have them beaten.", author: "George Carlin" },
   { text: "Electricity is really just organized lightning.", author: "George Carlin" },
-  { text: "The planet is fine. The people are fucked.", author: "George Carlin" },
+  { text: "The planet is fine. The people are f*****.", author: "George Carlin" },
   { text: "Think of how stupid the average person is, and realize half of them are stupider than that.", author: "George Carlin" },
   { text: "Marriage is a wonderful institution, but who wants to live in an institution?", author: "Groucho Marx" },
   { text: "Quote me as saying I was misquoted.", author: "Groucho Marx" },

@@ -42,6 +42,16 @@ def normalize(s: str) -> str:
     return " ".join(s.lower().split())
 
 
+def sanitize(text: str) -> str:
+    for pattern, repl in (
+        (r"\bfuck\b", "f***"),
+        (r"\bfucked\b", "f*****"),
+        (r"\bfucking\b", "f******"),
+    ):
+        text = re.sub(pattern, repl, text, flags=re.I)
+    return text
+
+
 def main() -> None:
     text = SRC.read_text(encoding="utf-8")
     authors = extract_authors(text)
@@ -54,7 +64,14 @@ def main() -> None:
 
     quotes = []
     for category, arr in by_category.items():
-        quotes.extend({"text": q["text"], "author": q["author"], "category": category} for q in arr)
+        for q in arr:
+            quotes.append(
+                {
+                    "text": sanitize(q["text"]),
+                    "author": q["author"],
+                    "category": category,
+                }
+            )
 
     seen: dict[str, dict] = {}
     dupes = []
