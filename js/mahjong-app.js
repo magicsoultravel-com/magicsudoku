@@ -55,8 +55,6 @@
   let voiceEnabled = true;
   let voiceSupported = false;
   let chineseVoice = null;
-  let speakTimer = null;
-  let lastSpokenKey = "";
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -277,8 +275,8 @@
     }
 
     if (voiceEnabled) {
-      btnVoice.title = "Tile pronunciation on — tap to mute";
-      btnVoice.setAttribute("aria-label", "Tile pronunciation on, tap to mute");
+      btnVoice.title = "Tile pronunciation on — speaks when you select a tile";
+      btnVoice.setAttribute("aria-label", "Tile pronunciation on, speaks when you select a tile");
       onIcon?.removeAttribute("hidden");
       offIcon?.setAttribute("hidden", "");
     } else {
@@ -316,8 +314,6 @@
     voiceEnabled = enabled && voiceSupported;
     if (!voiceEnabled) {
       window.speechSynthesis?.cancel();
-      clearTimeout(speakTimer);
-      lastSpokenKey = "";
     }
     try {
       localStorage.setItem(VOICE_KEY, voiceEnabled ? "1" : "0");
@@ -350,23 +346,6 @@
     utterance.rate = 0.9;
     utterance.pitch = 1.02;
     window.speechSynthesis.speak(utterance);
-  }
-
-  function onTileHover(tile) {
-    if (!voiceEnabled) return;
-
-    const key = `${tile.kind}:${tile.rank}`;
-    clearTimeout(speakTimer);
-    speakTimer = setTimeout(() => {
-      if (lastSpokenKey === key) return;
-      speakTile(tile);
-      lastSpokenKey = key;
-    }, 260);
-  }
-
-  function onTileHoverEnd() {
-    clearTimeout(speakTimer);
-    lastSpokenKey = "";
   }
 
   function clearSavedGame() {
@@ -645,10 +624,6 @@
       btn.setAttribute("aria-label", tip);
       btn.disabled = (!free && selected !== tile.id) || animating;
       btn.addEventListener("click", () => onTileClick(tile.id));
-      btn.addEventListener("mouseenter", () => onTileHover(tile));
-      btn.addEventListener("mouseleave", onTileHoverEnd);
-      btn.addEventListener("focus", () => onTileHover(tile));
-      btn.addEventListener("blur", onTileHoverEnd);
       boardEl.appendChild(btn);
     }
 
@@ -756,6 +731,7 @@
     if (selected === null) {
       if (!Mahjong.isFree(tile, tiles)) return;
       selected = id;
+      speakTile(tile);
       renderBoard();
       saveGame();
       return;
@@ -775,12 +751,14 @@
       Mahjong.isFree(tile, tiles) &&
       Mahjong.canMatch(first, tile)
     ) {
+      speakTile(tile);
       removePair(first.id, tile.id);
       return;
     }
 
     if (!Mahjong.isFree(tile, tiles)) return;
     selected = id;
+    speakTile(tile);
     renderBoard();
     saveGame();
   }
@@ -850,7 +828,6 @@
   async function dealBoard({ dealSeed, recordStart = false } = {}) {
     const token = ++dealToken;
     window.speechSynthesis?.cancel();
-    onTileHoverEnd();
 
     gameWon = false;
     selected = null;
