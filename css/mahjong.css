@@ -306,6 +306,10 @@
 
 .mj-dot {
   display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 3px;
+  min-height: 3px;
   border-radius: 50%;
   background: transparent;
 }
@@ -339,12 +343,10 @@
   height: 62%;
 }
 
-.mj-bamboo-6,
-.mj-bamboo-7,
-.mj-bamboo-8,
-.mj-bamboo-9 {
+.mj-bamboo-sticks.mj-bamboo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(0.45rem, 1fr);
   align-content: center;
   justify-items: center;
   gap: 2px;
@@ -352,13 +354,14 @@
   height: 72%;
 }
 
-.mj-bamboo-6 .mj-stick,
-.mj-bamboo-7 .mj-stick,
-.mj-bamboo-8 .mj-stick,
-.mj-bamboo-9 .mj-stick {
-  width: 20%;
-  min-width: 2px;
-  height: 100%;
+.mj-bamboo-sticks.mj-bamboo-grid .mj-stick {
+  width: 0.34rem;
+  height: 0.95rem;
+  min-width: 3px;
+  min-height: 0.45rem;
+  flex: none;
+  justify-self: center;
+  align-self: center;
 }
 
 .mj-bamboo-one .mj-bird {
@@ -383,10 +386,12 @@
 
 /* Characters — larger relative to tile */
 .mj-chars-text {
-  font-size: clamp(0.75rem, 50%, 1.5rem);
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(0.7rem, 42%, 1.35rem);
   color: #1d4ed8;
   letter-spacing: -0.02em;
   font-weight: 800;
+  line-height: 1.05;
 }
 
 /* Winds */

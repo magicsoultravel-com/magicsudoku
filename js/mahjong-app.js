@@ -280,7 +280,8 @@
     if (rank === 1) {
       return '<span class="mj-pattern mj-bamboo-one" aria-hidden="true"><i class="mj-bird"></i></span>';
     }
-    let html = `<span class="mj-pattern mj-bamboo-sticks mj-bamboo-${rank}" aria-hidden="true">`;
+    const gridCls = rank >= 6 ? " mj-bamboo-grid" : "";
+    let html = `<span class="mj-pattern mj-bamboo-sticks mj-bamboo-${rank}${gridCls}" aria-hidden="true">`;
     for (let i = 0; i < rank; i++) {
       html += '<i class="mj-stick"></i>';
     }
