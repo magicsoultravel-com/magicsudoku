@@ -50,6 +50,9 @@
         <button id="btn-mahjong-guide" class="btn btn-icon mahjong-only" type="button" aria-label="How to play mahjong" title="How to play & tile symbols">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7l3 3V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M10 2.5V6H13" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 8.5h5M5.5 10.5h3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </button>
+        <button id="btn-mahjong-seeds" class="btn btn-icon mahjong-only" type="button" aria-label="Board seeds" title="Board seeds">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h6v2a4 4 0 0 1-6 0v-2z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 9.5v3M6.5 12.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
         <button id="btn-seeds" class="btn btn-icon sudoku-only" type="button" aria-label="Puzzle seeds" title="Puzzle seeds">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5h6v2a4 4 0 0 1-6 0v-2z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 9.5v3M6.5 12.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         </button>
@@ -245,13 +248,15 @@
 
   <dialog id="seeds-dialog" class="dialog">
     <div class="dialog-header">
-      <h2 class="dialog-title">Puzzle seeds</h2>
+      <h2 class="dialog-title sudoku-only">Puzzle seeds</h2>
+      <h2 class="dialog-title mahjong-only">Board seeds</h2>
       <button id="seeds-close" class="btn btn-icon" type="button" aria-label="Close">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
     <div class="dialog-body">
-      <p class="dialog-hint">Same seed + difficulty always gives the same puzzle. Cleared if you wipe browser data.</p>
+      <p class="dialog-hint sudoku-only">Same seed + difficulty always gives the same puzzle. Cleared if you wipe browser data.</p>
+      <p class="dialog-hint mahjong-only">Same seed + difficulty always deals the same board. Restart replays the current seed. Cleared if you wipe browser data.</p>
       <div class="seeds-current">
         <span class="seeds-label">Current</span>
         <span id="current-seed" class="current-seed">—</span>

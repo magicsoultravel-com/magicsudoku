@@ -16,10 +16,15 @@
   const guideDialog = document.getElementById("mahjong-guide-dialog");
   const guideBasics = document.getElementById("mahjong-guide-basics");
   const guideSymbols = document.getElementById("mahjong-guide-symbols");
+  const seedsDialog = document.getElementById("seeds-dialog");
+  const currentSeedEl = document.getElementById("current-seed");
+  const seedList = document.getElementById("seed-list");
 
   const STATE_KEY = "mahjong-game";
   const STATS_KEY = "mahjong-stats";
+  const SEEDS_KEY = "mahjong-seeds";
   const STATE_VERSION = 3;
+  const MAX_SEEDS = 10;
   const ACCEPT_VERSIONS = [2, 3];
   const MAX_SAVE_BYTES = 250_000;
   const REMOVE_MS = 320;
@@ -27,6 +32,8 @@
   let tiles = [];
   let selected = null;
   let seed = null;
+  let currentDifficulty = "medium";
+  let seedHistory = [];
   let history = [];
   let timerInterval = null;
   let timerRunning = false;
@@ -131,6 +138,58 @@
     saveStats();
   }
 
+  function loadSeedHistory() {
+    try {
+      seedHistory = JSON.parse(localStorage.getItem(SEEDS_KEY) || "[]");
+    } catch {
+      seedHistory = [];
+    }
+  }
+
+  function saveSeedHistory() {
+    try {
+      localStorage.setItem(SEEDS_KEY, JSON.stringify(seedHistory));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  function recordSeed(nextSeed, difficulty) {
+    seed = nextSeed;
+    currentDifficulty = difficulty;
+    seedHistory = seedHistory.filter((e) => e.seed !== nextSeed);
+    seedHistory.unshift({ seed: nextSeed, difficulty, at: Date.now() });
+    if (seedHistory.length > MAX_SEEDS) seedHistory.length = MAX_SEEDS;
+    saveSeedHistory();
+  }
+
+  function renderSeeds() {
+    if (!currentSeedEl || !seedList) return;
+    currentSeedEl.textContent = seed != null ? `${seed} · ${currentDifficulty}` : "—";
+
+    seedList.innerHTML = "";
+    if (!seedHistory.length) {
+      const li = document.createElement("li");
+      li.textContent = "No seeds yet";
+      seedList.appendChild(li);
+      return;
+    }
+
+    seedHistory.forEach((entry) => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.seed} · ${entry.difficulty}`;
+      if (entry.seed === seed) li.classList.add("current");
+      li.title = new Date(entry.at).toLocaleString();
+      seedList.appendChild(li);
+    });
+  }
+
+  function openSeeds() {
+    window.SudokuApp?.closeMenu?.();
+    renderSeeds();
+    seedsDialog?.showModal();
+  }
+
   function clearSavedGame() {
     try {
       localStorage.removeItem(STATE_KEY);
@@ -225,6 +284,7 @@
 
       tiles = compactTiles(state.tiles);
       seed = Number.isFinite(state.seed) ? state.seed : null;
+      currentDifficulty = state.difficultyPref || difficultyEl?.value || "medium";
       seconds = Number.isFinite(state.seconds) ? state.seconds : 0;
       gameWon = !!state.gameWon;
       selected = gameWon ? null : (state.selected ?? null);
@@ -570,8 +630,12 @@
     if (token !== dealToken) return;
 
     tiles = result.tiles;
-    seed = result.seed;
-    if (recordStart) recordGameStarted();
+    if (recordStart) {
+      recordGameStarted();
+      recordSeed(result.seed, difficultyEl?.value || "medium");
+    } else {
+      seed = result.seed;
+    }
 
     setDealProgress(1, "Ready");
     await wait(160);
@@ -655,6 +719,7 @@
     if (initialized) return;
     initialized = true;
     loadStats();
+    loadSeedHistory();
 
     btnUndo.addEventListener("click", undo);
     btnHint.addEventListener("click", showHint);
@@ -662,6 +727,7 @@
     document.getElementById("btn-mahjong-new")?.addEventListener("click", newGame);
     document.getElementById("btn-mahjong-restart")?.addEventListener("click", restartGame);
     document.getElementById("btn-mahjong-guide")?.addEventListener("click", openGuide);
+    document.getElementById("btn-mahjong-seeds")?.addEventListener("click", openSeeds);
     document.getElementById("mahjong-guide-close")?.addEventListener("click", () => guideDialog?.close());
     guideDialog?.addEventListener("click", (e) => {
       if (e.target === guideDialog) guideDialog.close();
@@ -692,6 +758,7 @@
     saveGame,
     newGame,
     restartGame,
+    openSeeds,
     isActive() {
       return window.Games?.active === "mahjong";
     },
