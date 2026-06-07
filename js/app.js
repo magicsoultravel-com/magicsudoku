@@ -65,6 +65,7 @@
   let notes = [];
   let selected = null;
   let activeNumber = null;
+  let activePencilSet = new Set();
   let pencilMode = false;
   let zenMode = false;
   let catEnabled = false;
@@ -440,6 +441,7 @@
       gameWon,
       pencilMode,
       activeNumber,
+      activePencilNumbers: [...activePencilSet],
       selected,
       difficultyPref: difficultyEl.value,
       history: serializeStack(history),
@@ -472,6 +474,11 @@
       gameWon = !!state.gameWon;
       pencilMode = !!state.pencilMode;
       activeNumber = state.activeNumber ?? null;
+      activePencilSet = new Set(
+        Array.isArray(state.activePencilNumbers) ? state.activePencilNumbers : []
+      );
+      if (pencilMode) activeNumber = null;
+      else activePencilSet.clear();
       selected = state.selected ?? null;
       history = deserializeStack(state.history);
       future = deserializeStack(state.future);
@@ -510,10 +517,10 @@
       parts.push("Empty cell");
     }
     if (!given[row][col] && !gameWon) {
-      if (pencilMode && activeNumber) {
-        parts.push(`Pencil ${activeNumber} — click to mark`);
+      if (pencilMode && activePencilSet.size) {
+        parts.push(`Pencil ${[...activePencilSet].sort((a, b) => a - b).join(", ")} — click to mark`);
       } else if (pencilMode) {
-        parts.push("Tap cell to pick a note");
+        parts.push("Pick note(s) on the numpad");
       } else if (activeNumber) {
         parts.push("Tap a number to fill");
       } else {
@@ -570,13 +577,18 @@
   function togglePencilFromPicker() {
     pencilMode = !pencilMode;
     btnPencil.classList.toggle("active", pencilMode);
+    if (pencilMode) {
+      activeNumber = null;
+    } else {
+      activePencilSet.clear();
+    }
     syncCellPicker();
     saveGame();
   }
 
   function shouldShowCellPicker(row, col) {
     if (gameWon || given[row][col]) return false;
-    if (activeNumber !== null) return false;
+    if (activeNumber !== null || activePencilSet.size > 0) return false;
     if (pencilMode && puzzle[row][col] !== 0) return false;
     return true;
   }
@@ -656,7 +668,25 @@
   }
 
   function getHighlightNumber() {
-    return activeNumber;
+    return pencilMode ? null : activeNumber;
+  }
+
+  function togglePencilNumber(num) {
+    if (activePencilSet.has(num)) activePencilSet.delete(num);
+    else activePencilSet.add(num);
+  }
+
+  function applyPencilToCell(row, col) {
+    if (given[row][col] || puzzle[row][col] !== 0 || gameWon || !activePencilSet.size) return;
+    pushHistory();
+    for (const num of activePencilSet) {
+      if (notes[row][col].has(num)) notes[row][col].delete(num);
+      else notes[row][col].add(num);
+    }
+    ensureTimerRunning();
+    clearErrors();
+    renderBoard();
+    saveGame();
   }
 
   function blockedCellsForNumber(num) {
@@ -683,10 +713,13 @@
   }
 
   function updateNumpad() {
-    const hl = getHighlightNumber();
     numpadEl.querySelectorAll(".btn").forEach((btn) => {
       const num = +btn.dataset.num;
-      btn.classList.toggle("active", hl === num);
+      if (pencilMode) {
+        btn.classList.toggle("active", activePencilSet.has(num));
+      } else {
+        btn.classList.toggle("active", activeNumber === num);
+      }
       btn.classList.toggle("exhausted", countRemaining(num) === 0);
     });
   }
@@ -708,7 +741,7 @@
   function renderBoard() {
     boardEl.innerHTML = "";
     const hlNum = getHighlightNumber();
-    const blocked = blockedCellsForNumber(hlNum);
+    const blocked = hlNum ? blockedCellsForNumber(hlNum) : new Set();
 
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
@@ -766,7 +799,7 @@
     closeCellPicker();
 
     if (pencilMode) {
-      activeNumber = activeNumber === num ? null : num;
+      togglePencilNumber(num);
       renderBoard();
       saveGame();
       return;
@@ -808,13 +841,16 @@
   function selectCell(row, col) {
     if (gameWon) return;
 
-    if (activeNumber !== null && !given[row][col]) {
+    if (activePencilSet.size && !given[row][col]) {
       if (pencilMode && puzzle[row][col] === 0) {
         selected = { row, col };
-        toggleNoteAt(row, col, activeNumber);
+        applyPencilToCell(row, col);
         closeCellPicker();
         return;
       }
+    }
+
+    if (activeNumber !== null && !given[row][col]) {
       if (!pencilMode && Sudoku.isValid(puzzle, row, col, activeNumber)) {
         selected = { row, col };
         placeNumber(activeNumber, { keepActive: true });
@@ -922,9 +958,14 @@
   function togglePencil() {
     pencilMode = !pencilMode;
     btnPencil.classList.toggle("active", pencilMode);
+    if (pencilMode) {
+      activeNumber = null;
+    } else {
+      activePencilSet.clear();
+    }
     if (cellPickerOpen) syncCellPicker();
     else closeCellPicker();
-    if (selected) renderBoard();
+    renderBoard();
     saveGame();
   }
 
@@ -1000,6 +1041,7 @@
     gameWon = false;
     selected = null;
     activeNumber = null;
+    activePencilSet.clear();
     history = [];
     future = [];
 
@@ -1166,6 +1208,7 @@
     gameWon = false;
     selected = null;
     activeNumber = null;
+    activePencilSet.clear();
     history = [];
     future = [];
     setStatus("");
