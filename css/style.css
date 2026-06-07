@@ -490,9 +490,9 @@ body {
 .cell-picker {
   position: absolute;
   z-index: 6;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   padding: 3px;
   width: min(42%, 7.25rem);
   background: var(--surface);
@@ -503,6 +503,12 @@ body {
   transform: scale(0.92);
   transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none;
+}
+
+.cell-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
 }
 
 .cell-picker[hidden] {
@@ -544,6 +550,31 @@ body {
 }
 
 .cell-picker-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cell-picker-pencil {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 1.375rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.cell-picker-pencil:hover {
+  background: var(--highlight);
+  color: var(--text);
+}
+
+.cell-picker-pencil.active {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent);
@@ -723,11 +754,9 @@ body {
 
 .cat-speech {
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 4px);
-  transform: translateX(-50%) rotate(calc(-1 * var(--cat-heading, 0deg)));
-  transform-origin: bottom center;
-  z-index: 1000;
+  left: 0;
+  top: 0;
+  z-index: 50;
   background: var(--surface);
   color: var(--text);
   border: 2.5px solid var(--text);

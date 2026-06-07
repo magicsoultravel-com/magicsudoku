@@ -14,16 +14,16 @@ window.CatModels = (() => {
         </g>
         <g class="cat-legs">
           <g class="cat-leg cat-leg-l1">
-            <path class="cf" d="M23 30 L23.5 39 L22.6 42 L24.4 42 L25.1 39 L24.8 30 Z"/>
+            <path class="cf" d="M23 30 L23.4 35 L22.6 41 L24.4 41 L24.9 35 L24.8 30 Z"/>
           </g>
           <g class="cat-leg cat-leg-l2">
-            <path class="cf" d="M28 30 L28.5 39 L27.6 42 L29.4 42 L30.1 39 L29.8 30 Z"/>
+            <path class="cf" d="M28 30 L28.4 35 L27.6 41 L29.4 41 L29.9 35 L29.8 30 Z"/>
           </g>
           <g class="cat-leg cat-leg-l3">
-            <path class="cf" d="M40 30 L40.5 39 L39.6 42 L41.4 42 L42.1 39 L41.8 30 Z"/>
+            <path class="cf" d="M40 30 L40.4 35 L39.6 41 L41.4 41 L41.9 35 L41.8 30 Z"/>
           </g>
           <g class="cat-leg cat-leg-l4">
-            <path class="cf" d="M47 30 L47.5 39 L46.6 42 L48.4 42 L49.1 39 L48.8 30 Z"/>
+            <path class="cf" d="M47 30 L47.4 35 L46.6 41 L48.4 41 L48.9 35 L48.8 30 Z"/>
           </g>
         </g>
       </g>

@@ -1,8 +1,8 @@
 (() => {
   const WALK_SPEED = 10;
   const CHASE_SPEED = 22;
-  const WALK_MIN_MS = 8000;
-  const WALK_MAX_MS = 15000;
+  const WALK_MIN_MS = 5500;
+  const WALK_MAX_MS = 10000;
   const FALL_SPEED = 70;
   const APPROACH_GAP = 24;
   const FLIP_DURATION = 0.38;
@@ -201,11 +201,25 @@
     if (speechEl) speechEl.hidden = true;
   }
 
+  function positionSpeechBubble() {
+    if (!speechEl || speechEl.hidden || !boardCat || !boardWrap) return;
+
+    const catRect = boardCat.getBoundingClientRect();
+    const wrapRect = boardWrap.getBoundingClientRect();
+    const cx = catRect.left + catRect.width / 2 - wrapRect.left;
+    const cy = catRect.top - wrapRect.top;
+
+    speechEl.style.left = `${cx}px`;
+    speechEl.style.top = `${cy}px`;
+    speechEl.style.transform = "translate(-50%, calc(-100% - 4px))";
+  }
+
   function showPurr() {
     if (!speechEl) return;
     const lines = ["Prrrr…", "Purrr~", "Mrrrp…"];
     speechEl.querySelector("span").textContent = lines[randInt(0, lines.length - 1)];
     speechEl.hidden = false;
+    positionSpeechBubble();
   }
 
   function showSpeech() {
@@ -213,15 +227,16 @@
     const lines = ["Meow!", "Mrrp?", "Prrrr…", "Mew!"];
     speechEl.querySelector("span").textContent = lines[randInt(0, lines.length - 1)];
     speechEl.hidden = false;
+    positionSpeechBubble();
   }
 
   function pickIdleBehavior() {
     const r = Math.random();
-    if (r < 0.1) return "chase";
-    if (r < 0.2) return "meow";
-    if (r < 0.42) return "look";
-    if (r < 0.58) return "lie";
-    if (r < 0.78) return "sit";
+    if (r < 0.07) return "chase";
+    if (r < 0.14) return "meow";
+    if (r < 0.24) return "look";
+    if (r < 0.52) return "lie";
+    if (r < 0.82) return "sit";
     return "walk";
   }
 
@@ -268,9 +283,9 @@
       showMouseAt(mouseTarget);
       idleTimer = rand(3500, 5500);
     } else if (behavior === "sit") {
-      idleTimer = rand(2500, 5000);
+      idleTimer = rand(3500, 6500);
     } else if (behavior === "lie") {
-      idleTimer = rand(4000, 7000);
+      idleTimer = rand(5000, 9000);
     } else if (behavior === "look") {
       beginLookRoutine();
     } else {
@@ -534,6 +549,8 @@
       }
     }
 
+    if (speechEl && !speechEl.hidden) positionSpeechBubble();
+
     rafId = requestAnimationFrame(tick);
   }
 
@@ -589,7 +606,7 @@
     boardWrap = wrap;
     boardCat = catEl;
     mouseEl = mouseNode;
-    speechEl = catEl.querySelector(".cat-speech");
+    speechEl = document.getElementById("cat-speech");
     bindPointer();
   }
 

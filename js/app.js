@@ -539,6 +539,9 @@
 
   function buildCellPicker() {
     cellPicker.innerHTML = "";
+
+    const grid = document.createElement("div");
+    grid.className = "cell-picker-grid";
     for (let n = 1; n <= 9; n++) {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -546,8 +549,29 @@
       btn.textContent = n;
       btn.dataset.num = n;
       btn.addEventListener("click", (e) => onCellPickerClick(n, e));
-      cellPicker.appendChild(btn);
+      grid.appendChild(btn);
     }
+    cellPicker.appendChild(grid);
+
+    const pencilBtn = document.createElement("button");
+    pencilBtn.type = "button";
+    pencilBtn.className = "cell-picker-pencil";
+    pencilBtn.title = "Pencil marks";
+    pencilBtn.setAttribute("aria-label", "Toggle pencil marks");
+    pencilBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M10 4l2 2" stroke="currentColor" stroke-width="1.2"/></svg>';
+    pencilBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePencilFromPicker();
+    });
+    cellPicker.appendChild(pencilBtn);
+  }
+
+  function togglePencilFromPicker() {
+    pencilMode = !pencilMode;
+    btnPencil.classList.toggle("active", pencilMode);
+    syncCellPicker();
+    saveGame();
   }
 
   function shouldShowCellPicker(row, col) {
@@ -575,6 +599,8 @@
       btn.disabled = blocked;
       btn.classList.toggle("active", pencilMode && notes[row][col].has(num));
     });
+    const pencilBtn = cellPicker.querySelector(".cell-picker-pencil");
+    if (pencilBtn) pencilBtn.classList.toggle("active", pencilMode);
   }
 
   function positionCellPicker(row, col) {
@@ -625,7 +651,7 @@
 
     if (!Sudoku.isValid(puzzle, row, col, num)) return;
 
-    placeNumber(num);
+    placeNumber(num, { keepActive: false });
     closeCellPicker();
   }
 
@@ -759,7 +785,7 @@
       !given[selected.row][selected.col] &&
       Sudoku.isValid(puzzle, selected.row, selected.col, num)
     ) {
-      placeNumber(num);
+      placeNumber(num, { keepActive: true });
       return;
     }
 
@@ -791,7 +817,7 @@
       }
       if (!pencilMode && Sudoku.isValid(puzzle, row, col, activeNumber)) {
         selected = { row, col };
-        placeNumber(activeNumber);
+        placeNumber(activeNumber, { keepActive: true });
         closeCellPicker();
         return;
       }
@@ -821,9 +847,6 @@
     }
 
     closeCellPicker();
-    if (!pencilMode) {
-      activeNumber = puzzle[row][col] || null;
-    }
     clearErrors();
     renderBoard();
     saveGame();
@@ -853,12 +876,13 @@
     }
   }
 
-  function placeNumber(num) {
+  function placeNumber(num, { keepActive = false } = {}) {
     if (!selected || given[selected.row][selected.col] || gameWon) return;
     const { row, col } = selected;
 
     if (pencilMode) {
-      activeNumber = num;
+      if (keepActive) activeNumber = num;
+      else activeNumber = null;
       if (puzzle[row][col] === 0) toggleNoteAt(row, col, num);
       else {
         renderBoard();
@@ -871,7 +895,7 @@
     puzzle[row][col] = num;
     clearNotesAt(row, col);
     removeNoteFromPeers(row, col, num);
-    activeNumber = num;
+    activeNumber = keepActive ? num : null;
     ensureTimerRunning();
     clearErrors();
     renderBoard();
@@ -898,7 +922,8 @@
   function togglePencil() {
     pencilMode = !pencilMode;
     btnPencil.classList.toggle("active", pencilMode);
-    closeCellPicker();
+    if (cellPickerOpen) syncCellPicker();
+    else closeCellPicker();
     if (selected) renderBoard();
     saveGame();
   }
