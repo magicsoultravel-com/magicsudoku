@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "scripts" / "build-quotes.mjs"
 OUT = ROOT / "data" / "quotes.json"
 
+CATEGORIES = ("uplifting", "cunning", "funny", "strategic")
 QUOTE_RE = re.compile(r'\{ text: "(.*?)", author: "(.*?)" \}', re.DOTALL)
 
 
@@ -44,19 +45,20 @@ def normalize(s: str) -> str:
 def main() -> None:
     text = SRC.read_text(encoding="utf-8")
     authors = extract_authors(text)
-    uplifting = extract_array("uplifting", text)
-    cunning = extract_array("cunning", text)
-    funny = extract_array("funny", text)
+    by_category = {name: extract_array(name, text) for name in CATEGORIES}
 
-    for name, arr in [("uplifting", uplifting), ("cunning", cunning), ("funny", funny)]:
+    for name, arr in by_category.items():
         if len(arr) != 100:
             print(f"ERROR {name}: expected 100, got {len(arr)}", file=sys.stderr)
             sys.exit(1)
 
-    all_q = uplifting + cunning + funny
+    quotes = []
+    for category, arr in by_category.items():
+        quotes.extend({"text": q["text"], "author": q["author"], "category": category} for q in arr)
+
     seen: dict[str, dict] = {}
     dupes = []
-    for q in all_q:
+    for q in quotes:
         key = normalize(q["text"])
         if key in seen:
             dupes.append(q["text"])
@@ -81,20 +83,61 @@ def main() -> None:
         "Deng Xiaoping": "1904–1997",
         "Fred Allen": "1894–1956",
         "Orson Welles": "1915–1985",
+        "Dwight D. Eisenhower": "1890–1969",
+        "Helmuth von Moltke": "1800–1891",
+        "Michael Porter": "b. 1947",
+        "Peter Drucker": "1909–2005",
+        "Andy Grove": "1936–2016",
+        "Jack Welch": "1935–2020",
+        "George S. Patton": "1885–1945",
+        "Douglas MacArthur": "1880–1964",
+        "Omar Bradley": "1893–1981",
+        "B.H. Liddell Hart": "1895–1970",
+        "José Raúl Capablanca": "1888–1942",
+        "Aron Nimzowitsch": "1886–1935",
+        "Garry Kasparov": "b. 1963",
+        "Bobby Fischer": "1943–2008",
+        "John Boyd": "1927–1997",
+        "Miyamoto Musashi": "c. 1584–1645",
+        "Alfred Sloan": "1875–1966",
+        "Warren Buffett": "b. 1930",
+        "Charlie Munger": "1924–2023",
+        "Jeff Bezos": "b. 1964",
+        "Reed Hastings": "b. 1960",
+        "Abraham Lincoln": "1809–1865",
+        "George Washington": "1732–1799",
+        "Benjamin Graham": "1894–1976",
+        "Matsuo Bashō": "1644–1694",
+        "Thomas Huxley": "1825–1895",
+        "Henry Mintzberg": "b. 1939",
+        "Proverbs": "origin unknown",
+        "Antoine de Saint-Exupéry": "1900–1944",
+        "Frederick the Great": "1712–1786",
+        "Mother Teresa": "1910–1997",
+        "Walt Disney": "1901–1966",
+        "Margaret Mead": "1901–1978",
+        "Steve Jobs": "1955–2011",
+        "Coco Chanel": "1883–1971",
+        "Thomas Mann": "1875–1955",
+        "Rickson Gracie": "b. 1958",
     }
     authors.update(extra_authors)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(
         json.dumps(
-            {"authors": authors, "uplifting": uplifting, "cunning": cunning, "funny": funny},
+            {
+                "authors": authors,
+                "categories": list(CATEGORIES),
+                "quotes": quotes,
+            },
             indent=2,
             ensure_ascii=False,
         )
         + "\n",
         encoding="utf-8",
     )
-    print(f"Wrote {OUT.relative_to(ROOT)} — {len(all_q)} quotes")
+    print(f"Wrote {OUT.relative_to(ROOT)} — {len(quotes)} quotes in {len(CATEGORIES)} categories")
 
 
 if __name__ == "__main__":

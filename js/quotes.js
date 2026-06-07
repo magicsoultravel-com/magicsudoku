@@ -58,17 +58,24 @@ const Quotes = (() => {
     }
   }
 
+  function loadEntries(data) {
+    if (Array.isArray(data.quotes)) return data.quotes;
+    const tagged = [];
+    for (const category of data.categories || ["uplifting", "cunning", "funny", "strategic"]) {
+      for (const entry of data[category] || []) {
+        tagged.push({ ...entry, category: entry.category || category });
+      }
+    }
+    return tagged;
+  }
+
   async function init() {
     if (list) return;
     const res = await fetch("data/quotes.json");
     if (!res.ok) throw new Error("Failed to load quotes");
     const data = await res.json();
     authors = data.authors || {};
-    list = dedupeQuotes([
-      ...(data.uplifting || []),
-      ...(data.cunning || []),
-      ...(data.funny || []),
-    ]);
+    list = dedupeQuotes(loadEntries(data));
   }
 
   function nextQuote() {
@@ -95,7 +102,13 @@ const Quotes = (() => {
     }
 
     const circa = circaFor(entry);
-    return { text: entry.text, author: entry.author, circa, attribution: formatAttribution(entry) };
+    return {
+      text: entry.text,
+      author: entry.author,
+      category: entry.category || "uplifting",
+      circa,
+      attribution: formatAttribution(entry),
+    };
   }
 
   return {
@@ -103,6 +116,10 @@ const Quotes = (() => {
     nextQuote,
     get count() {
       return list ? list.length : 0;
+    },
+    get categories() {
+      if (!list) return [];
+      return [...new Set(list.map((q) => q.category))];
     },
   };
 })();

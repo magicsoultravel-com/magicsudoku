@@ -180,6 +180,17 @@
   --mj-tile-face: #f6f3eb;
   --mj-tile-edge: #c4bdb0;
   --mj-tile-side: #8a8378;
+  --mj-blocked-face: #e4e0d6;
+  --mj-blocked-edge: #b0a89a;
+  --mj-dot-color: #c41e1e;
+  --mj-bamboo-color: #1a7a3a;
+  --mj-bamboo-bird-eye: #facc15;
+  --mj-chars-color: #1d4ed8;
+  --mj-wind-color: #0f172a;
+  --mj-dragon-red: #dc2626;
+  --mj-dragon-green: #15803d;
+  --mj-white-color: #0f172a;
+  --mj-white-border: #0f172a;
   position: relative;
   width: 100%;
   height: 100%;
@@ -282,8 +293,8 @@
 }
 
 .mj-tile.blocked:not(.selected):not(.hint)::before {
-  background: #e4e0d6;
-  border-color: #b0a89a;
+  background: var(--mj-blocked-face);
+  border-color: var(--mj-blocked-edge);
 }
 
 .mj-tile.blocked:not(.selected):not(.hint) .mj-face {
@@ -341,7 +352,7 @@
 }
 
 .mj-dot.on {
-  background: #c41e1e;
+  background: var(--mj-dot-color);
 }
 
 /* Bamboo */
@@ -361,7 +372,7 @@
   min-width: 2px;
   height: 76%;
   border-radius: 1px;
-  background: #1a7a3a;
+  background: var(--mj-bamboo-color);
 }
 
 .mj-bamboo-4 .mj-stick,
@@ -395,7 +406,7 @@
   width: 55%;
   height: 65%;
   border-radius: 50% 50% 40% 40%;
-  background: #1a7a3a;
+  background: var(--mj-bamboo-color);
   position: relative;
 }
 
@@ -407,14 +418,14 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #facc15;
+  background: var(--mj-bamboo-bird-eye);
 }
 
 /* Characters — larger relative to tile */
 .mj-chars-text {
   font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
   font-size: clamp(0.7rem, 42%, 1.35rem);
-  color: #1d4ed8;
+  color: var(--mj-chars-color);
   letter-spacing: -0.02em;
   font-weight: 800;
   line-height: 1.05;
@@ -423,7 +434,7 @@
 /* Winds */
 .mj-wind-text {
   font-size: clamp(0.85rem, 58%, 1.65rem);
-  color: #0f172a;
+  color: var(--mj-wind-color);
   font-weight: 800;
 }
 
@@ -434,11 +445,11 @@
 }
 
 .mj-dragon-1 {
-  color: #dc2626;
+  color: var(--mj-dragon-red);
 }
 
 .mj-dragon-2 {
-  color: #15803d;
+  color: var(--mj-dragon-green);
 }
 
 .mj-white-frame {
@@ -447,8 +458,8 @@
   justify-content: center;
   min-width: 1.1em;
   min-height: 1.1em;
-  color: #0f172a;
-  border: 2px solid #0f172a;
+  color: var(--mj-white-color);
+  border: 2px solid var(--mj-white-border);
   font-weight: 800;
   line-height: 1;
 }
@@ -468,6 +479,30 @@
 .mj-season-2 { color: #f59e0b; }
 .mj-season-3 { color: #d97706; }
 .mj-season-4 { color: #0ea5e9; }
+
+/* Black tile set */
+.app[data-mj-tiles="black"] .mahjong-board {
+  --mj-tile-face: #232328;
+  --mj-tile-edge: #48484f;
+  --mj-tile-side: #101012;
+  --mj-blocked-face: #2c2c32;
+  --mj-blocked-edge: #3f3f46;
+  --mj-dot-color: #f87171;
+  --mj-bamboo-color: #4ade80;
+  --mj-bamboo-bird-eye: #fde047;
+  --mj-chars-color: #93c5fd;
+  --mj-wind-color: #e2e8f0;
+  --mj-dragon-red: #f87171;
+  --mj-dragon-green: #4ade80;
+  --mj-white-color: #f8fafc;
+  --mj-white-border: #e2e8f0;
+}
+
+.app[data-mj-tiles="black"] .mj-guide-tile::before {
+  background: #232328;
+  border-color: #48484f;
+  box-shadow: 1px 2px 0 #101012;
+}
 
 .mahjong-actions {
   justify-content: center;
