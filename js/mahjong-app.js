@@ -12,7 +12,9 @@
 
   const STATE_KEY = "mahjong-game";
   const STATS_KEY = "mahjong-stats";
-  const STATE_VERSION = 2;
+  const STATE_VERSION = 3;
+  const ACCEPT_VERSIONS = [2, 3];
+  const MAX_SAVE_BYTES = 250_000;
   const REMOVE_MS = 320;
 
   let tiles = [];
@@ -117,16 +119,72 @@
     saveStats();
   }
 
+  function clearSavedGame() {
+    try {
+      localStorage.removeItem(STATE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  function isValidTile(tile, expectedId) {
+    return (
+      tile &&
+      tile.id === expectedId &&
+      Number.isFinite(tile.x) &&
+      Number.isFinite(tile.y) &&
+      Number.isFinite(tile.z) &&
+      typeof tile.kind === "string" &&
+      Number.isFinite(tile.rank) &&
+      typeof tile.removed === "boolean"
+    );
+  }
+
+  function validateLoadedState(state) {
+    if (!state || !ACCEPT_VERSIONS.includes(state.v)) return false;
+    if (!Array.isArray(state.tiles) || state.tiles.length !== Mahjong.TILE_COUNT) return false;
+
+    for (let i = 0; i < state.tiles.length; i++) {
+      if (!isValidTile(state.tiles[i], i)) return false;
+    }
+
+    if (
+      state.selected !== null &&
+      state.selected !== undefined &&
+      (!Number.isInteger(state.selected) ||
+        state.selected < 0 ||
+        state.selected >= Mahjong.TILE_COUNT ||
+        state.tiles[state.selected]?.removed)
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function compactTiles(list) {
+    return list.map((t) => ({
+      id: t.id,
+      kind: t.kind,
+      rank: t.rank,
+      label: t.label,
+      key: t.key,
+      x: t.x,
+      y: t.y,
+      z: t.z,
+      removed: t.removed,
+    }));
+  }
+
   function saveGame() {
-    if (!tiles.length) return;
+    if (!tiles.length || tiles.length !== Mahjong.TILE_COUNT) return;
     const state = {
       v: STATE_VERSION,
-      tiles,
+      tiles: compactTiles(tiles),
       seed,
       seconds,
       gameWon,
-      selected,
-      history,
+      selected: gameWon ? null : selected,
       difficultyPref: difficultyEl?.value,
     };
     try {
@@ -140,18 +198,25 @@
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return false;
 
+    if (raw.length > MAX_SAVE_BYTES) {
+      console.warn("Mahjong save too large — clearing");
+      clearSavedGame();
+      return false;
+    }
+
     try {
       const state = JSON.parse(raw);
-      if (state.v !== STATE_VERSION || !Array.isArray(state.tiles) || !state.tiles.length) {
+      if (!validateLoadedState(state)) {
+        clearSavedGame();
         return false;
       }
 
-      tiles = state.tiles;
-      seed = state.seed;
-      seconds = state.seconds || 0;
+      tiles = compactTiles(state.tiles);
+      seed = Number.isFinite(state.seed) ? state.seed : null;
+      seconds = Number.isFinite(state.seconds) ? state.seconds : 0;
       gameWon = !!state.gameWon;
-      selected = state.selected ?? null;
-      history = Array.isArray(state.history) ? state.history : [];
+      selected = gameWon ? null : (state.selected ?? null);
+      history = [];
 
       if (state.difficultyPref && difficultyEl) difficultyEl.value = state.difficultyPref;
 
@@ -160,7 +225,7 @@
 
       renderBoard();
       updateTileCount();
-      btnUndo.disabled = history.length === 0 || gameWon;
+      btnUndo.disabled = true;
 
       if (gameWon) {
         timerEl.textContent = formatTime(seconds);
@@ -171,7 +236,9 @@
         resetTimer();
       }
       return true;
-    } catch {
+    } catch (err) {
+      console.warn("Mahjong save corrupt — clearing", err);
+      clearSavedGame();
       return false;
     }
   }
@@ -252,10 +319,11 @@
   }
 
   function renderBoard() {
+    if (!boardEl || !tiles.length) return;
     boardEl.innerHTML = "";
     const bounds = Mahjong.bounds(tiles);
-    const spanX = bounds.maxX - bounds.minX;
-    const spanY = bounds.maxY - bounds.minY;
+    const spanX = Math.max(bounds.maxX - bounds.minX, Mahjong.TILE_W);
+    const spanY = Math.max(bounds.maxY - bounds.minY, Mahjong.TILE_H);
     const SCALE = 0.86;
     const margin = ((1 - SCALE) * 100) / 2;
     const tileW = (Mahjong.TILE_W / spanX) * 100 * SCALE;
@@ -499,12 +567,21 @@
     document.getElementById("btn-mahjong-new")?.addEventListener("click", newGame);
     document.getElementById("btn-mahjong-restart")?.addEventListener("click", restartGame);
 
-    if (!tryLoadGame()) {
+    try {
+      if (!tryLoadGame()) {
+        newGame();
+      }
+    } catch (err) {
+      console.error("Mahjong init failed — starting fresh", err);
+      clearSavedGame();
       newGame();
     }
 
+    let resizeTimer = null;
     window.addEventListener("resize", () => {
-      if (tiles.length) renderBoard();
+      if (!tiles.length) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => renderBoard(), 120);
     });
   }
 

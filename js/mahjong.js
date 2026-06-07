@@ -198,8 +198,37 @@ const Mahjong = (() => {
     };
   }
 
+  /** Fast greedy reverse-deal; succeeds often without backtracking. */
+  function dealGreedy(seed) {
+    const rand = mulberry32(seed);
+    const pairs = buildPairQueue(rand);
+    const unplaced = new Set(LAYOUT.map((_, i) => i));
+    const placed = [];
+    const byId = new Map();
+
+    for (const [tileA, tileB] of pairs) {
+      const freeSlots = [...unplaced].filter((id) => isSlotFree(id, placed, LAYOUT[id]));
+      if (freeSlots.length < 2) return null;
+
+      shuffle(freeSlots, rand);
+      const s1 = freeSlots[0];
+      const s2 = freeSlots[1];
+      const t1 = makeTile(s1, tileA);
+      const t2 = makeTile(s2, tileB);
+
+      placed.push(t1, t2);
+      byId.set(s1, t1);
+      byId.set(s2, t2);
+      unplaced.delete(s1);
+      unplaced.delete(s2);
+    }
+
+    if (unplaced.size !== 0) return null;
+    return LAYOUT.map((_, i) => byId.get(i));
+  }
+
   /** Reverse-deal with backtracking — guaranteed solvable when it succeeds. */
-  function dealSolvable(seed, nodeBudget = 80000) {
+  function dealSolvable(seed, nodeBudget = 15000) {
     const rand = mulberry32(seed);
     const pairs = buildPairQueue(rand);
     const unplaced = new Set(LAYOUT.map((_, i) => i));
@@ -265,23 +294,37 @@ const Mahjong = (() => {
 
   function generate(seed = Date.now()) {
     const count = LAYOUT.length;
-    if (count % 2 !== 0) {
-      throw new Error("Layout must have an even number of positions");
-    }
-
-    if (buildDeck().length !== count) {
-      throw new Error(`Deck size mismatch for layout ${count}`);
-    }
-
-    for (let attempt = 0; attempt < 48; attempt++) {
-      const trySeed = (seed + attempt * 7919) >>> 0;
-      const tiles = dealSolvable(trySeed);
-      if (tiles) {
-        return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
-      }
-    }
-
     const fallbackSeed = (seed ^ 0x9e3779b9) >>> 0;
+
+    try {
+      if (count % 2 !== 0 || buildDeck().length !== count) {
+        return {
+          tiles: dealShuffled(fallbackSeed),
+          seed: fallbackSeed,
+          layout: LAYOUT,
+          solvable: false,
+        };
+      }
+
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const trySeed = (seed + attempt * 7919) >>> 0;
+        const tiles = dealGreedy(trySeed);
+        if (tiles) {
+          return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
+        }
+      }
+
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const trySeed = (seed + attempt * 99991) >>> 0;
+        const tiles = dealSolvable(trySeed);
+        if (tiles) {
+          return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
+        }
+      }
+    } catch (err) {
+      console.warn("Mahjong deal failed, using shuffled fallback", err);
+    }
+
     return {
       tiles: dealShuffled(fallbackSeed),
       seed: fallbackSeed,
