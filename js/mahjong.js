@@ -331,28 +331,40 @@ const Mahjong = (() => {
         }
       }
 
-      for (let attempt = 0; attempt < 6; attempt++) {
-        report(0.82 + attempt * 0.025, "Finding solvable layout…");
+      for (let attempt = 0; attempt < 12; attempt++) {
+        report(0.82 + attempt * 0.012, "Finding solvable layout…");
         await tick();
         const trySeed = (seed + attempt * 99991) >>> 0;
-        const tiles = dealSolvable(trySeed);
+        const tiles = dealSolvable(trySeed, 25000);
         if (tiles) {
           report(1, "Ready");
           return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
         }
       }
+
+      report(0.92, "Verifying shuffle…");
+      await tick();
+      const verified = tryVerifiedShuffle(fallbackSeed, 24);
+      report(1, "Ready");
+      return {
+        tiles: verified.tiles,
+        seed: verified.seed,
+        layout: LAYOUT,
+        solvable: verified.solvable,
+      };
     } catch (err) {
       console.warn("Mahjong deal failed, using shuffled fallback", err);
     }
 
     report(0.94, "Finishing…");
     await tick();
+    const verified = tryVerifiedShuffle(fallbackSeed, 24);
     report(1, "Ready");
     return {
-      tiles: dealShuffled(fallbackSeed),
-      seed: fallbackSeed,
+      tiles: verified.tiles,
+      seed: verified.seed,
       layout: LAYOUT,
-      solvable: false,
+      solvable: verified.solvable,
     };
   }
 
@@ -378,22 +390,31 @@ const Mahjong = (() => {
         }
       }
 
-      for (let attempt = 0; attempt < 6; attempt++) {
+      for (let attempt = 0; attempt < 12; attempt++) {
         const trySeed = (seed + attempt * 99991) >>> 0;
-        const tiles = dealSolvable(trySeed);
+        const tiles = dealSolvable(trySeed, 25000);
         if (tiles) {
           return { tiles, seed: trySeed, layout: LAYOUT, solvable: true };
         }
       }
+
+      const verified = tryVerifiedShuffle(fallbackSeed, 24);
+      return {
+        tiles: verified.tiles,
+        seed: verified.seed,
+        layout: LAYOUT,
+        solvable: verified.solvable,
+      };
     } catch (err) {
       console.warn("Mahjong deal failed, using shuffled fallback", err);
     }
 
+    const verified = tryVerifiedShuffle(fallbackSeed, 24);
     return {
-      tiles: dealShuffled(fallbackSeed),
-      seed: fallbackSeed,
+      tiles: verified.tiles,
+      seed: verified.seed,
       layout: LAYOUT,
-      solvable: false,
+      solvable: verified.solvable,
     };
   }
 
@@ -407,6 +428,139 @@ const Mahjong = (() => {
 
   function freeTiles(tiles) {
     return tiles.filter((t) => isFree(t, tiles));
+  }
+
+  const DEFAULT_SOLVE_BUDGET = 100000;
+
+  function tilesMask(tiles) {
+    let mask = 0n;
+    for (const t of tiles) {
+      if (!t.removed) mask |= 1n << BigInt(t.id);
+    }
+    return mask;
+  }
+
+  function hasAvailableMove(tiles) {
+    const free = freeTiles(tiles);
+    for (let i = 0; i < free.length; i++) {
+      for (let j = i + 1; j < free.length; j++) {
+        if (canMatch(free[i], free[j])) return true;
+      }
+    }
+    return false;
+  }
+
+  function isSolvable(tiles, options = {}) {
+    const nodeBudget = options.nodeBudget ?? DEFAULT_SOLVE_BUDGET;
+    const memo = new Map();
+    let nodes = 0;
+
+    function solve() {
+      if (isWon(tiles)) return true;
+
+      const mask = tilesMask(tiles);
+      if (memo.has(mask)) return memo.get(mask);
+      if (++nodes > nodeBudget) return null;
+
+      const free = freeTiles(tiles);
+
+      for (let i = 0; i < free.length; i++) {
+        for (let j = i + 1; j < free.length; j++) {
+          if (!canMatch(free[i], free[j])) continue;
+          free[i].removed = true;
+          free[j].removed = true;
+          const result = solve();
+          free[i].removed = false;
+          free[j].removed = false;
+          if (result === null) return null;
+          if (result) {
+            memo.set(mask, true);
+            return true;
+          }
+        }
+      }
+
+      memo.set(mask, false);
+      return false;
+    }
+
+    return solve();
+  }
+
+  async function isSolvableAsync(tiles, options = {}) {
+    const nodeBudget = options.nodeBudget ?? DEFAULT_SOLVE_BUDGET;
+    const yieldEvery = options.yieldEvery ?? 400;
+    const memo = new Map();
+    let nodes = 0;
+
+    async function solve() {
+      if (isWon(tiles)) return true;
+
+      const mask = tilesMask(tiles);
+      if (memo.has(mask)) return memo.get(mask);
+      if (++nodes > nodeBudget) return null;
+      if (nodes % yieldEvery === 0) await tick();
+
+      const free = freeTiles(tiles);
+
+      for (let i = 0; i < free.length; i++) {
+        for (let j = i + 1; j < free.length; j++) {
+          if (!canMatch(free[i], free[j])) continue;
+          free[i].removed = true;
+          free[j].removed = true;
+          const result = await solve();
+          free[i].removed = false;
+          free[j].removed = false;
+          if (result === null) return null;
+          if (result) {
+            memo.set(mask, true);
+            return true;
+          }
+        }
+      }
+
+      memo.set(mask, false);
+      return false;
+    }
+
+    return solve();
+  }
+
+  function findWinningMove(tiles, options = {}) {
+    const free = freeTiles(tiles);
+    for (let i = 0; i < free.length; i++) {
+      for (let j = i + 1; j < free.length; j++) {
+        if (!canMatch(free[i], free[j])) continue;
+        free[i].removed = true;
+        free[j].removed = true;
+        const result = isSolvable(tiles, options);
+        free[i].removed = false;
+        free[j].removed = false;
+        if (result === true) return [free[i].id, free[j].id];
+      }
+    }
+    return null;
+  }
+
+  function findAnyMove(tiles) {
+    const free = freeTiles(tiles);
+    for (let i = 0; i < free.length; i++) {
+      for (let j = i + 1; j < free.length; j++) {
+        if (canMatch(free[i], free[j])) return [free[i].id, free[j].id];
+      }
+    }
+    return null;
+  }
+
+  function tryVerifiedShuffle(baseSeed, maxAttempts = 24) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const trySeed = (baseSeed + attempt * 31337) >>> 0;
+      const tiles = dealShuffled(trySeed);
+      const ok = isSolvable(tiles, { nodeBudget: 200000 });
+      if (ok === true) return { tiles, seed: trySeed, solvable: true };
+    }
+    const lastSeed = (baseSeed + (maxAttempts - 1) * 31337) >>> 0;
+    return { tiles: dealShuffled(lastSeed), seed: lastSeed, solvable: false };
   }
 
   function bounds(tiles) {
@@ -441,6 +595,11 @@ const Mahjong = (() => {
     remaining,
     isWon,
     freeTiles,
+    hasAvailableMove,
+    isSolvable,
+    isSolvableAsync,
+    findWinningMove,
+    findAnyMove,
     bounds,
     tileLabel,
   };

@@ -28,9 +28,9 @@
   const SEEDS_KEY = "mahjong-seeds";
   const TILE_SET_KEY = "mahjong-tile-set";
   const VOICE_KEY = "mahjong-voice";
-  const STATE_VERSION = 3;
+  const STATE_VERSION = 4;
   const MAX_SEEDS = 10;
-  const ACCEPT_VERSIONS = [2, 3];
+  const ACCEPT_VERSIONS = [2, 3, 4];
   const MAX_SAVE_BYTES = 250_000;
   const REMOVE_MS = 320;
 
@@ -51,6 +51,9 @@
   let dealToken = 0;
   let hintPair = null;
   let hintStep = 0;
+  let dealWasSolvable = true;
+  let boardSolvable = null;
+  let solvabilityToken = 0;
   let tileSet = "ivory";
   let voiceEnabled = true;
   let voiceSupported = false;
@@ -165,18 +168,29 @@
     }
   }
 
-  function recordSeed(nextSeed, difficulty) {
+  function seedSolvableLabel(solvable) {
+    return solvable === false ? "unverified" : "verified";
+  }
+
+  function formatSeedEntry(entry) {
+    const tag = seedSolvableLabel(entry.solvable);
+    return `${entry.seed} · ${entry.difficulty} · ${tag}`;
+  }
+
+  function recordSeed(nextSeed, difficulty, solvable = true) {
     seed = nextSeed;
     currentDifficulty = difficulty;
+    dealWasSolvable = solvable !== false;
     seedHistory = seedHistory.filter((e) => e.seed !== nextSeed);
-    seedHistory.unshift({ seed: nextSeed, difficulty, at: Date.now() });
+    seedHistory.unshift({ seed: nextSeed, difficulty, solvable: dealWasSolvable, at: Date.now() });
     if (seedHistory.length > MAX_SEEDS) seedHistory.length = MAX_SEEDS;
     saveSeedHistory();
   }
 
   function renderSeeds() {
     if (!currentSeedEl || !seedList) return;
-    currentSeedEl.textContent = seed != null ? `${seed} · ${currentDifficulty}` : "—";
+    currentSeedEl.textContent =
+      seed != null ? `${seed} · ${currentDifficulty} · ${seedSolvableLabel(dealWasSolvable)}` : "—";
 
     seedList.innerHTML = "";
     if (!seedHistory.length) {
@@ -188,7 +202,7 @@
 
     seedHistory.forEach((entry) => {
       const li = document.createElement("li");
-      li.textContent = `${entry.seed} · ${entry.difficulty}`;
+      li.textContent = formatSeedEntry(entry);
       if (entry.seed === seed) li.classList.add("current");
       li.title = new Date(entry.at).toLocaleString();
       seedList.appendChild(li);
@@ -415,6 +429,7 @@
       gameWon,
       selected: gameWon ? null : selected,
       difficultyPref: difficultyEl?.value,
+      dealWasSolvable,
     };
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify(state));
@@ -443,15 +458,18 @@
       tiles = compactTiles(state.tiles);
       seed = Number.isFinite(state.seed) ? state.seed : null;
       currentDifficulty = state.difficultyPref || difficultyEl?.value || "medium";
+      dealWasSolvable = state.dealWasSolvable !== false;
       seconds = Number.isFinite(state.seconds) ? state.seconds : 0;
       gameWon = !!state.gameWon;
       selected = gameWon ? null : (state.selected ?? null);
       history = [];
+      boardSolvable = null;
 
       if (state.difficultyPref && difficultyEl) difficultyEl.value = state.difficultyPref;
 
       if (gameWon) setStatus("Cleared!", "ok");
       else setStatus("");
+      if (!gameWon && tiles.length) scheduleSolvabilityCheck();
 
       renderBoard();
       updateTileCount();
@@ -639,6 +657,32 @@
     btnUndo.disabled = gameWon;
   }
 
+  function trapStatusMessage() {
+    if (dealWasSolvable) {
+      return "No winning path from here — try Undo";
+    }
+    return "This layout may not be completable — try Undo or New game";
+  }
+
+  async function scheduleSolvabilityCheck() {
+    const token = ++solvabilityToken;
+    boardSolvable = null;
+
+    if (Mahjong.isWon(tiles) || !Mahjong.hasAvailableMove(tiles)) return;
+
+    const result = await Mahjong.isSolvableAsync(tiles);
+    if (token !== solvabilityToken || gameWon || animating) return;
+
+    if (result === false) {
+      boardSolvable = false;
+      setStatus(trapStatusMessage(), "err");
+    } else if (result === true) {
+      boardSolvable = true;
+    } else {
+      boardSolvable = null;
+    }
+  }
+
   function undo() {
     if (!history.length || gameWon || animating) return;
     clearHint();
@@ -646,16 +690,19 @@
     tiles = snap.tiles.map((t) => ({ ...t }));
     selected = snap.selected;
     gameWon = Mahjong.isWon(tiles);
+    boardSolvable = null;
     setStatus("");
     ensureTimerRunning();
     renderBoard();
     btnUndo.disabled = history.length === 0;
     saveGame();
+    if (!gameWon) scheduleSolvabilityCheck();
   }
 
   function afterPairRemoved() {
     selected = null;
     animating = false;
+    boardSolvable = null;
     renderBoard();
     btnUndo.disabled = false;
 
@@ -665,10 +712,11 @@
       recordGameCompleted();
       setStatus("Cleared!", "ok");
       btnUndo.disabled = true;
-    } else if (!Mahjong.freeTiles(tiles).length) {
-      setStatus("No moves left — start a new game", "err");
+    } else if (!Mahjong.hasAvailableMove(tiles)) {
+      setStatus("No matching pairs left — start a new game", "err");
     } else {
       setStatus("");
+      scheduleSolvabilityCheck();
     }
     saveGame();
   }
@@ -763,16 +811,36 @@
     saveGame();
   }
 
-  function findHintPair() {
-    const free = Mahjong.freeTiles(tiles);
-    for (let i = 0; i < free.length; i++) {
-      for (let j = i + 1; j < free.length; j++) {
-        if (Mahjong.canMatch(free[i], free[j])) {
-          return [free[i].id, free[j].id];
-        }
-      }
+  function resolveHintPair() {
+    if (!Mahjong.hasAvailableMove(tiles)) return null;
+
+    if (boardSolvable === false) {
+      return Mahjong.findAnyMove(tiles);
     }
-    return null;
+
+    const winning = Mahjong.findWinningMove(tiles);
+    if (winning) return winning;
+
+    if (boardSolvable === true) {
+      return Mahjong.findAnyMove(tiles);
+    }
+
+    const solvable = Mahjong.isSolvable(tiles, { nodeBudget: 80000 });
+    if (solvable === false) {
+      boardSolvable = false;
+      return Mahjong.findAnyMove(tiles);
+    }
+    if (solvable === true) {
+      boardSolvable = true;
+      const move = Mahjong.findWinningMove(tiles);
+      if (move) return move;
+    }
+
+    return Mahjong.findAnyMove(tiles);
+  }
+
+  function hintStatusSuffix() {
+    return boardSolvable === false ? " — puzzle is not solvable" : "";
   }
 
   function showHint() {
@@ -783,13 +851,13 @@
       selected = hintPair[1];
       renderBoard();
       applyHintGlow(hintPair);
-      setStatus("Hint: match the glowing tiles");
+      setStatus(`Hint: match the glowing tiles${hintStatusSuffix()}`);
       saveGame();
       return;
     }
 
     clearHint();
-    const pair = findHintPair();
+    const pair = resolveHintPair();
     if (!pair) {
       setStatus("No matching pairs available", "err");
       return;
@@ -800,7 +868,7 @@
     selected = pair[0];
     renderBoard();
     applyHintGlow([pair[0]]);
-    setStatus("Hint: tap again for the matching tile");
+    setStatus(`Hint: tap again for the matching tile${hintStatusSuffix()}`);
     saveGame();
   }
 
@@ -833,6 +901,8 @@
     selected = null;
     history = [];
     animating = false;
+    boardSolvable = null;
+    solvabilityToken++;
     clearHint();
     setStatus("");
 
@@ -860,9 +930,11 @@
     if (token !== dealToken) return;
 
     tiles = result.tiles;
+    dealWasSolvable = result.solvable !== false;
+    boardSolvable = dealWasSolvable ? true : null;
     if (recordStart) {
       recordGameStarted();
-      recordSeed(result.seed, difficultyEl?.value || "medium");
+      recordSeed(result.seed, difficultyEl?.value || "medium", result.solvable);
     } else {
       seed = result.seed;
     }
@@ -875,7 +947,7 @@
     renderBoard(true);
 
     if (!result.solvable) {
-      setStatus("Board dealt — use Hint if you get stuck", "err");
+      setStatus("Board dealt — layout may not be completable", "err");
     }
 
     await wait(120);
